@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@300;400;600;700&display=swap');
+
+@import "tailwindcss";
+@import "tw-animate-css";
+
+:root {
+	/* Palette: vibrant gradients with high-energy accents */
+	--color-1: #7c3aed; /* indigo */
+	--color-2: #ff4d6d; /* warm pink */
+	--color-3: #06b6d4; /* cyan */
+	--color-4: #f59e0b; /* amber */
+	--bg-surface: 255 255 255; /* used with rgb() + alpha */
+	--glass-bg: 11 15 23; /* dark glass base */
+	--muted: 120 124 126;
+	--radius-lg: 16px;
+}
+
+/* Fonts */
+html, body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+h1,h2,h3,.logo-heading { font-family: Poppins, Inter, system-ui; }
+
+/* Dynamic gradients */
+.bg-gradient-primary {
+	background-image: linear-gradient(90deg, var(--color-1), var(--color-2));
+}
+.bg-gradient-featured {
+	background-image: linear-gradient(90deg, var(--color-3), var(--color-4));
+}
+.text-gradient-primary {
+	background-image: linear-gradient(90deg, var(--color-1), var(--color-2));
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+/* Glassmorphism */
+.glass {
+	background: rgba(var(--glass-bg), 0.35);
+	border: 1px solid rgba(255,255,255,0.06);
+	backdrop-filter: blur(8px) saturate(1.05);
+}
+
+/* Soft UI shadows */
+.soft-shadow { box-shadow: 0 6px 18px rgba(15,23,42,0.08), inset 0 1px 0 rgba(255,255,255,0.02); }
+.shadow-hover { box-shadow: 0 12px 30px rgba(124,58,237,0.08); }
+.shadow-card { box-shadow: 0 8px 20px rgba(2,6,23,0.06); }
+.shadow-featured { box-shadow: 0 10px 30px rgba(245,158,11,0.12); }
+
+/* Component helpers */
+.card-rounded { border-radius: var(--radius-lg); }
+.glass-border { border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); }
+
+/* CTA emphasis */
+.btn-cta {
+	background-color: rgba(124,58,237,0.88);
+	color: white;
+	border: 1px solid rgba(124,58,237,0.8);
+	box-shadow: 0 6px 16px rgba(124,58,237,0.1);
+}
+.btn-cta:hover {
+	background-color: rgba(124,58,237,0.98);
+}
+
+/* Utilities for motion-friendly elements */
+.will-change-transform { will-change: transform, opacity; }
+
+@source "../src";
