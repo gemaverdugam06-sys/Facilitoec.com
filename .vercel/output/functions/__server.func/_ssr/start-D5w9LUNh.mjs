@@ -1,4 +1,4 @@
-import { c as createMiddleware } from "./server-D4P_Fnk1.mjs";
+import { c as createMiddleware } from "./server-bcorGszI.mjs";
 import { r as renderErrorPage } from "./index.mjs";
 import { s as supabase } from "./client-Bvdk7TO_.mjs";
 import "../_libs/seroval.mjs";
@@ -84,7 +84,7 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
     if (error != null && typeof error === "object" && "statusCode" in error) {
       throw error;
     }
-    console.error(error);
+    console.error("[SSR] request middleware error:", error instanceof Error ? error.stack ?? error.message : error);
     return new Response(renderErrorPage(), {
       status: 500,
       headers: { "content-type": "text/html; charset=utf-8" }
