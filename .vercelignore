@@ -2,8 +2,6 @@
 .gitignore
 node_modules
 .env.example
-src
-supabase
 .tanstack
 .od-skills
 *.md
@@ -12,3 +10,4 @@ eslint.config.js
 .prettierignore
 DESIGN_GUIDE.md
 SECURITY_CHECKLIST.md
+supabase
