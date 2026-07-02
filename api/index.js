@@ -1,0 +1,62 @@
+import server from "../dist/server/server.js";
+
+function toNodeHeaders(headers) {
+  const nodeHeaders = {};
+  headers.forEach((value, key) => {
+    nodeHeaders[key] = value;
+  });
+  return nodeHeaders;
+}
+
+async function getRequestBody(req) {
+  if (["GET", "HEAD", "DELETE"].includes(req.method)) {
+    return undefined;
+  }
+
+  return new Promise((resolve, reject) => {
+    let data = "";
+    req.on("data", (chunk) => {
+      data += chunk.toString();
+    });
+    req.on("end", () => {
+      resolve(data);
+    });
+    req.on("error", reject);
+  });
+}
+
+export default async function handler(req, res) {
+  try {
+    const protocol = req.headers["x-forwarded-proto"] ?? "https";
+    const host = req.headers.host ?? "localhost";
+    const url = req.url ?? "/";
+    const fullUrl = `${protocol}://${host}${url}`;
+
+    const body = await getRequestBody(req);
+    const request = new Request(fullUrl, {
+      method: req.method ?? "GET",
+      headers: req.headers,
+      body: body ? body : undefined,
+    });
+
+    const response = await server.fetch(request, {}, {});
+    const responseBody = await response.text();
+
+    res.statusCode = response.status;
+    for (const [key, value] of response.headers.entries()) {
+      if (value) {
+        res.setHeader(key, value);
+      }
+    }
+
+    res.end(responseBody);
+  } catch (error) {
+    console.error("[vercel-handler] Error:", error instanceof Error ? error.stack : error);
+    res.statusCode = 500;
+    res.setHeader("content-type", "text/html; charset=utf-8");
+    res.end(
+      '<!doctype html><html lang="es"><body><h1>Error interno del servidor</h1><p>Por favor, intenta de nuevo.</p></body></html>'
+    );
+  }
+}
+
