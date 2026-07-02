@@ -1,11 +1,27 @@
-import server from "../dist/server/server.js";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 
-function toNodeHeaders(headers) {
-  const nodeHeaders = {};
-  headers.forEach((value, key) => {
-    nodeHeaders[key] = value;
-  });
-  return nodeHeaders;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+let serverModule = null;
+
+async function loadServer() {
+  if (serverModule) return serverModule;
+
+  try {
+    serverModule = (await import("../dist/server/server.js")).default;
+  } catch (e1) {
+    try {
+      const absolutePath = join(__dirname, "../dist/server/server.js");
+      serverModule = (await import(absolutePath)).default;
+    } catch (e2) {
+      console.error("[Handler] Failed to load server from ../dist/server/server.js:", e1.message);
+      console.error("[Handler] Also failed with absolute path:", e2.message);
+      throw new Error("Could not load server module");
+    }
+  }
+  return serverModule;
 }
 
 async function getRequestBody(req) {
@@ -27,6 +43,7 @@ async function getRequestBody(req) {
 
 export default async function handler(req, res) {
   try {
+    const server = await loadServer();
     const protocol = req.headers["x-forwarded-proto"] ?? "https";
     const host = req.headers.host ?? "localhost";
     const url = req.url ?? "/";
@@ -59,4 +76,3 @@ export default async function handler(req, res) {
     );
   }
 }
-
