@@ -10,4 +10,4 @@ eslint.config.js
 .prettierignore
 DESIGN_GUIDE.md
 SECURITY_CHECKLIST.md
-supabase
+/supabase
