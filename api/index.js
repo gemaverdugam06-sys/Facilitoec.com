@@ -1,5 +1,6 @@
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -14,10 +15,22 @@ async function loadServer() {
   } catch (e1) {
     try {
       const absolutePath = join(__dirname, "../dist/server/server.js");
-      serverModule = (await import(absolutePath)).default;
+      // Try importing using file:// URL for absolute path
+      const absoluteFileUrl = `file://${absolutePath}`;
+      serverModule = (await import(absoluteFileUrl)).default;
     } catch (e2) {
-      console.error("[Handler] Failed to load server from ../dist/server/server.js:", e1.message);
-      console.error("[Handler] Also failed with absolute path:", e2.message);
+      console.error("[Handler] Failed to load server from ../dist/server/server.js:", e1 && e1.stack ? e1.stack : e1);
+      console.error("[Handler] Also failed with absolute path (attempted file://):", e2 && e2.stack ? e2.stack : e2);
+      const checkPath = join(__dirname, "../dist/server/server.js");
+      console.error("[Handler] cwd:", process.cwd());
+      console.error("[Handler] exists (relative):", fs.existsSync(join(__dirname, "../dist/server/server.js")));
+      console.error("[Handler] exists (absolute):", fs.existsSync(checkPath));
+      // list files in dist/server for debugging
+      try {
+        console.error("[Handler] dist/server contents:", fs.readdirSync(join(__dirname, "../dist/server")).slice(0, 100));
+      } catch (re) {
+        console.error("[Handler] Could not list dist/server:", re && re.stack ? re.stack : re);
+      }
       throw new Error("Could not load server module");
     }
   }
