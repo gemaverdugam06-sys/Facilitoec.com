@@ -22,30 +22,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
+    let settled = false;
+
+    const finish = () => {
+      if (!active || settled) return;
+      settled = true;
+      setLoading(false);
+    };
+
+    if ((supabase as typeof supabase & { __unavailable?: boolean }).__unavailable) {
+      setSession(null);
+      finish();
+      return;
+    }
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, s) => {
       if (!active) return;
       setSession(s);
-      setLoading(false);
+      finish();
     });
+
+    const timer = window.setTimeout(() => {
+      if (!active) return;
+      setSession(null);
+      finish();
+    }, 4000);
 
     supabase.auth
       .getSession()
       .then(({ data }) => {
         if (!active) return;
-        setSession(data.session);
-        setLoading(false);
+        setSession(data.session ?? null);
+        finish();
       })
       .catch(() => {
         if (!active) return;
         setSession(null);
-        setLoading(false);
+        finish();
+      })
+      .finally(() => {
+        if (typeof window !== "undefined") window.clearTimeout(timer);
       });
 
     return () => {
       active = false;
+      if (typeof window !== "undefined") window.clearTimeout(timer);
       subscription.unsubscribe();
     };
   }, []);

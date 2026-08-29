@@ -67,22 +67,22 @@ function createUnavailableSupabaseClient() {
       return Promise.resolve({ error: null });
     },
     signInWithOAuth() {
-      return Promise.resolve({ data: { provider: null }, error: null });
+      return Promise.resolve({ data: { provider: null }, error: { message: unavailableMessage } });
     },
     signInWithPassword() {
-      return Promise.resolve({ data: { session: null, user: null }, error: null });
+      return Promise.resolve({ data: { session: null, user: null }, error: { message: unavailableMessage } });
     },
     signInWithOtp() {
-      return Promise.resolve({ data: { session: null, user: null }, error: null });
+      return Promise.resolve({ data: { session: null, user: null }, error: { message: unavailableMessage } });
     },
     signUp() {
-      return Promise.resolve({ data: { session: null, user: null }, error: null });
+      return Promise.resolve({ data: { session: null, user: null }, error: { message: unavailableMessage } });
     },
     resetPasswordForEmail() {
-      return Promise.resolve({ data: null, error: null });
+      return Promise.resolve({ data: null, error: { message: unavailableMessage } });
     },
     verifyOtp() {
-      return Promise.resolve({ data: { session: null, user: null }, error: null });
+      return Promise.resolve({ data: { session: null, user: null }, error: { message: unavailableMessage } });
     },
     updateUser() {
       return Promise.resolve({ data: { user: null }, error: null });
