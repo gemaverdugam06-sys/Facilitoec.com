@@ -95,21 +95,30 @@ function MisPubs() {
 
       if (joinErr) throw joinErr;
 
-      // Procesar datos con transaccion mas reciente
-      const listaProductos = (productsWithTx || []).map((p: any) => ({
-        id: p.id,
-        titulo: p.titulo,
-        descripcion: p.descripcion,
-        precio: p.precio,
-        imagenes: p.imagenes,
-        activo: p.activo,
-        created_at: p.created_at,
-        es_destacado: p.es_destacado,
-        tipo_promocion: p.tipo_promocion,
-        promocionado_hasta: p.promocionado_hasta,
-        estado_pago: p.transacciones?.[0]?.estado_pago,
-        notas_admin: p.transacciones?.[0]?.notas_admin,
-      })) as Pub[];
+      const listaProductos = (productsWithTx || []).map((p: any) => {
+        const transacciones = Array.isArray(p.transacciones) ? p.transacciones : [];
+        const latestTx = transacciones.reduce((latest: any, current: any) => {
+          if (!latest) return current;
+          return new Date(current.created_at).getTime() > new Date(latest.created_at).getTime()
+            ? current
+            : latest;
+        }, null);
+
+        return {
+          id: p.id,
+          titulo: p.titulo,
+          descripcion: p.descripcion,
+          precio: p.precio,
+          imagenes: p.imagenes,
+          activo: p.activo,
+          created_at: p.created_at,
+          es_destacado: p.es_destacado,
+          tipo_promocion: p.tipo_promocion,
+          promocionado_hasta: p.promocionado_hasta,
+          estado_pago: latestTx?.estado_pago ?? null,
+          notas_admin: latestTx?.notas_admin ?? null,
+        };
+      }) as Pub[];
 
       setItems(listaProductos);
     } catch (err: unknown) {

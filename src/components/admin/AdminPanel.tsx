@@ -24,6 +24,9 @@ interface Tx {
   profiles: { nombre_completo: string | null } | null;
 }
 
+const normalizePaymentState = (value: string | null | undefined) =>
+  String(value ?? "").trim().toUpperCase();
+
 export function AdminPanel() {
   const { user } = useAuth();
   const [txs, setTxs] = useState<Tx[]>([]);
@@ -72,9 +75,14 @@ export function AdminPanel() {
   const onAprobar = async (tx: Tx) => {
     setWorking(tx.id);
     try {
+      const mensajeAprobado = "Tu pago ha sido aprobado correctamente.";
+
       const { error: txErr } = await supabase
         .from("transacciones")
-        .update({ estado_pago: "COMPLETADO" })
+        .update({
+          estado_pago: "COMPLETADO",
+          notas_admin: mensajeAprobado,
+        })
         .eq("id", tx.id);
       if (txErr) throw txErr;
 
@@ -90,7 +98,8 @@ export function AdminPanel() {
 
       toast.success("¡Publicidad aprobada y activada! 🎉");
       await loadTransactions();
-    } catch {
+    } catch (error) {
+      console.error("Error al aprobar transacción:", error);
       toast.error("Error al aprobar transacción");
     } finally {
       setWorking(null);
@@ -105,7 +114,7 @@ export function AdminPanel() {
     }
     setWorking(id);
     try {
-      const mensajeRechazo = `Tu pago de publicidad ha sido RECHAZADO ❌. Motivo: ${motivo}`;
+      const mensajeRechazo = `Tu pago ha sido rechazado. Revisa los detalles de tu pago. Motivo: ${motivo}`;
       const { error } = await supabase
         .from("transacciones")
         .update({ estado_pago: "RECHAZADO", notas_admin: mensajeRechazo })
@@ -113,7 +122,8 @@ export function AdminPanel() {
       if (error) throw error;
       toast.success("Transacción rechazada.");
       await loadTransactions();
-    } catch {
+    } catch (error) {
+      console.error("Error al rechazar transacción:", error);
       toast.error("Error al rechazar transacción");
     } finally {
       setWorking(null);
@@ -132,8 +142,12 @@ export function AdminPanel() {
     );
   }
 
-  const pendientes = txs.filter((t) => t.estado_pago === "PENDIENTE");
-  const otras = txs.filter((t) => t.estado_pago !== "PENDIENTE");
+  const pendientes = txs.filter(
+    (t) => normalizePaymentState(t.estado_pago) === "PENDIENTE",
+  );
+  const otras = txs.filter(
+    (t) => normalizePaymentState(t.estado_pago) !== "PENDIENTE",
+  );
 
   return (
     <div className="min-h-screen bg-background">
