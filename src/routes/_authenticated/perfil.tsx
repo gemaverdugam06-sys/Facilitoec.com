@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -21,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/perfil")({
 function PerfilPage() {
   const { user } = useAuth();
   const { t } = useI18n();
+  const navigate = useNavigate();
   const [nombre, setNombre] = useState("");
   const [ciudad, setCiudad] = useState("");
   const [telefono, setTelefono] = useState("");
@@ -63,6 +64,11 @@ function PerfilPage() {
       .upload(path, file, { contentType: file.type });
     if (upErr) {
       setUploading(false);
+      if (String(upErr.message).toLowerCase().includes("bucket not found")) {
+        return toast.error(
+          "Falta crear el bucket 'avatars' en Supabase Storage. Ve a Storage > New bucket y créalo para subir la foto de perfil."
+        );
+      }
       return toast.error(toUserMessage(upErr, "No se pudo subir la foto."));
     }
     const { error } = await supabase

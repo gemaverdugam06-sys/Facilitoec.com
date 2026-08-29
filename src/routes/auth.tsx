@@ -38,6 +38,7 @@ function AuthPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [phoneRaw, setPhoneRaw] = useState("");
 
@@ -108,7 +109,21 @@ function AuthPage() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim().length < 2) return toast.error(t("name_required"));
-    if (password.length < 8) return toast.error(t("password_min_8"));
+    if (password.length < 8) return toast.error(t("password_min_8"));    if (password !== confirmPassword) return toast.error(t("passwords_mismatch"));
+    const normalizedEmail = email.trim().toLowerCase();
+    const signupRateLimitResult = await checkRateLimit({
+      key: `signup:${normalizedEmail}`,
+      limit: 3,
+      window: 60 * 5,
+    });
+
+    if (!signupRateLimitResult.success) {
+      const seconds = Math.ceil((signupRateLimitResult.resetIn || 0) / 1000);
+      const minutes = Math.ceil(seconds / 60);
+      return toast.error(
+        `Demasiados intentos. Intenta de nuevo en ${minutes} minuto(s).`
+      );
+    }
 
     const phone = phoneRaw.trim() ? toE164Phone(phoneRaw) : null;
     if (phoneRaw.trim() && !phone) return toast.error(t("invalid_phone"));
@@ -294,6 +309,19 @@ function AuthPage() {
                     autoComplete="new-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    className="bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 focus:border-primary/70"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pwd-confirm-up">{t("confirm_password")}</Label>
+                  <Input
+                    id="pwd-confirm-up"
+                    type="password"
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
                     className="bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 focus:border-primary/70"
                   />
                 </div>

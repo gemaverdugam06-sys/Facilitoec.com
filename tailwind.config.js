@@ -26,6 +26,11 @@ module.exports = {
         destructive: "#ef4444",
         "destructive-foreground": "#ffffff",
         ring: "#6366f1",
+        popover: "#ffffff",
+        "popover-foreground": "#0f172a",
+        success: "#10b981",
+        warning: "#f59e0b",
+        "warning-foreground": "#ffffff",
       },
       fontSize: {
         'hero-sm': ['1.875rem', { lineHeight: '1.05' }], /* 30px */

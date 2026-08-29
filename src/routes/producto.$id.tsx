@@ -49,7 +49,7 @@ function ProductoPage() {
   const [loading, setLoading] = useState(true);
   const [idx, setIdx] = useState(0);
   const images = useSignedUrls("productos", p?.imagenes ?? []);
-
+  const vendorAvatarUrl = useSignedUrl("avatars", p?.profiles?.avatar_url);
   useEffect(() => {
     supabase
       .from("productos")
@@ -213,7 +213,7 @@ function ProductoPage() {
             <Card className="p-4 glass-border soft-shadow">
               <div className="flex items-center gap-3">
                 <Avatar>
-                  <AvatarImage src={p.profiles?.avatar_url ?? undefined} />
+                  <AvatarImage src={vendorAvatarUrl ?? undefined} />
                   <AvatarFallback>{p.profiles?.nombre_completo?.[0] ?? "?"}</AvatarFallback>
                 </Avatar>
                 <div>
