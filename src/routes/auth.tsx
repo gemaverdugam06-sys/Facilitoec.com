@@ -65,96 +65,118 @@ function AuthPage() {
 
   const handleGoogle = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/`,
-      },
-    });
-    setLoading(false);
-    if (error) {
-      toast.error(toUserMessage(error, "No se pudo iniciar sesión con Google."));
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
+      });
+
+      if (error) {
+        toast.error(toUserMessage(error, "No se pudo iniciar sesión con Google."));
+      }
+    } catch (error) {
+      console.error("Error al iniciar sesión con Google:", error);
+      toast.error("No se pudo iniciar sesión con Google. Intenta de nuevo.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Verificar rate limit
-    const rateLimitResult = await checkRateLimit({
-      key: `signin:${email}`,
-      limit: 5,
-      window: 60 * 15, // 15 minutos
-    });
+    try {
+      // Verificar rate limit
+      const rateLimitResult = await checkRateLimit({
+        key: `signin:${email}`,
+        limit: 5,
+        window: 60 * 15, // 15 minutos
+      });
 
-    if (!rateLimitResult.success) {
-      const seconds = Math.ceil((rateLimitResult.resetIn || 0) / 1000);
-      const minutes = Math.ceil(seconds / 60);
-      return toast.error(
-        `Demasiados intentos. Intenta en ${minutes} minuto(s).`
-      );
+      if (!rateLimitResult.success) {
+        const seconds = Math.ceil((rateLimitResult.resetIn || 0) / 1000);
+        const minutes = Math.ceil(seconds / 60);
+        return toast.error(
+          `Demasiados intentos. Intenta en ${minutes} minuto(s).`
+        );
+      }
+
+      if (password.length < 8) return toast.error(t("password_min_8"));
+      setLoading(true);
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (error) return toast.error(toUserMessage(error, "No se pudo iniciar sesión."));
+      toast.success(t("welcome_back"));
+    } catch (error) {
+      console.error("Error al iniciar sesión:", error);
+      toast.error("No se pudo iniciar sesión. Revisa tu conexión e inténtalo otra vez.");
+    } finally {
+      setLoading(false);
     }
-
-    if (password.length < 8) return toast.error(t("password_min_8"));
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
-    setLoading(false);
-    if (error) return toast.error(toUserMessage(error, "No se pudo iniciar sesión."));
-    toast.success(t("welcome_back"));
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim().length < 2) return toast.error(t("name_required"));
-    if (password.length < 8) return toast.error(t("password_min_8"));    if (password !== confirmPassword) return toast.error(t("passwords_mismatch"));
-    const normalizedEmail = email.trim().toLowerCase();
-    const signupRateLimitResult = await checkRateLimit({
-      key: `signup:${normalizedEmail}`,
-      limit: 3,
-      window: 60 * 5,
-    });
+    if (password.length < 8) return toast.error(t("password_min_8"));
+    if (password !== confirmPassword) return toast.error(t("passwords_mismatch"));
 
-    if (!signupRateLimitResult.success) {
-      const seconds = Math.ceil((signupRateLimitResult.resetIn || 0) / 1000);
-      const minutes = Math.ceil(seconds / 60);
-      return toast.error(
-        `Demasiados intentos. Intenta de nuevo en ${minutes} minuto(s).`
-      );
-    }
+    try {
+      const normalizedEmail = email.trim().toLowerCase();
+      const signupRateLimitResult = await checkRateLimit({
+        key: `signup:${normalizedEmail}`,
+        limit: 3,
+        window: 60 * 5,
+      });
 
-    const phone = phoneRaw.trim() ? toE164Phone(phoneRaw) : null;
-    if (phoneRaw.trim() && !phone) return toast.error(t("invalid_phone"));
+      if (!signupRateLimitResult.success) {
+        const seconds = Math.ceil((signupRateLimitResult.resetIn || 0) / 1000);
+        const minutes = Math.ceil(seconds / 60);
+        return toast.error(
+          `Demasiados intentos. Intenta de nuevo en ${minutes} minuto(s).`
+        );
+      }
 
-    setLoading(true);
-    const { data, error } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-        data: { full_name: name.trim() },
-      },
-    });
-    if (error) {
+      const phone = phoneRaw.trim() ? toE164Phone(phoneRaw) : null;
+      if (phoneRaw.trim() && !phone) return toast.error(t("invalid_phone"));
+
+      setLoading(true);
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: { full_name: name.trim() },
+        },
+      });
+
+      if (error) {
+        return toast.error(toUserMessage(error, "No se pudo crear la cuenta."));
+      }
+
+      if (data.session && phone) {
+        const linkErr = await linkPhoneToAccount(phone);
+        if (linkErr.error)
+          return toast.error(toUserMessage(linkErr.error, "No se pudo vincular el teléfono."));
+        toast.success(t("otp_sent"));
+        nav({ to: "/auth/verificar-telefono", replace: true });
+        return;
+      }
+
+      toast.success(data.session ? t("welcome_back") : t("signup_check_email_then_phone"));
+      nav({ to: data.session ? "/" : "/auth", replace: true });
+    } catch (error) {
+      console.error("Error al crear la cuenta:", error);
+      toast.error("No se pudo crear la cuenta. Revisa tu conexión e inténtalo otra vez.");
+    } finally {
       setLoading(false);
-      return toast.error(toUserMessage(error, "No se pudo crear la cuenta."));
     }
-
-    if (data.session && phone) {
-      const linkErr = await linkPhoneToAccount(phone);
-      setLoading(false);
-      if (linkErr.error)
-        return toast.error(toUserMessage(linkErr.error, "No se pudo vincular el teléfono."));
-      toast.success(t("otp_sent"));
-      nav({ to: "/auth/verificar-telefono", replace: true });
-      return;
-    }
-
-    setLoading(false);
-    toast.success(data.session ? t("welcome_back") : t("signup_check_email_then_phone"));
-    nav({ to: data.session ? "/" : "/auth", replace: true });
   };
 
   const sendPhoneCode = async () => {
@@ -162,33 +184,45 @@ function AuthPage() {
     if (!phone) return toast.error(t("invalid_phone"));
 
     setLoading(true);
-    const { error } = await sendPhoneOtp(phone);
-    setLoading(false);
-    if (error) return toast.error(toUserMessage(error, "No se pudo enviar el código SMS."));
+    try {
+      const { error } = await sendPhoneOtp(phone);
+      if (error) return toast.error(toUserMessage(error, "No se pudo enviar el código SMS."));
 
-    setPhoneE164(phone);
-    setPhoneStep("otp");
-    setCooldown(60);
-    toast.success(t("otp_sent"));
+      setPhoneE164(phone);
+      setPhoneStep("otp");
+      setCooldown(60);
+      toast.success(t("otp_sent"));
+    } catch (error) {
+      console.error("Error al enviar código SMS:", error);
+      toast.error("No se pudo enviar el código SMS.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const verifyPhoneCode = async () => {
     if (!phoneE164 || otp.length < 6) return toast.error(t("enter_6_digit_code"));
 
     setLoading(true);
-    const { data, error } = await verifyPhoneOtp(phoneE164, otp);
-    setLoading(false);
-    if (error) return toast.error(toUserMessage(error, "Código incorrecto o expirado."));
+    try {
+      const { data, error } = await verifyPhoneOtp(phoneE164, otp);
+      if (error) return toast.error(toUserMessage(error, "Código incorrecto o expirado."));
 
-    if (phoneSignupName.trim().length >= 2 && data.user) {
-      await supabase
-        .from("profiles")
-        .update({ nombre_completo: phoneSignupName.trim() })
-        .eq("id", data.user.id);
+      if (phoneSignupName.trim().length >= 2 && data.user) {
+        await supabase
+          .from("profiles")
+          .update({ nombre_completo: phoneSignupName.trim() })
+          .eq("id", data.user.id);
+      }
+
+      toast.success(t("phone_verified"));
+      nav({ to: "/", replace: true });
+    } catch (error) {
+      console.error("Error al verificar el código SMS:", error);
+      toast.error("No se pudo verificar el código. Intenta de nuevo.");
+    } finally {
+      setLoading(false);
     }
-
-    toast.success(t("phone_verified"));
-    nav({ to: "/", replace: true });
   };
 
   return (

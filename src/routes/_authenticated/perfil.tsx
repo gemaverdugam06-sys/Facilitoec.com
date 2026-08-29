@@ -105,11 +105,11 @@ function PerfilPage() {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto max-w-xl px-4 py-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("profile")}</CardTitle>
+        <Card className="border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+          <CardHeader className="border-b border-slate-200 bg-white/95">
+            <CardTitle className="text-slate-900">{t("profile")}</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="bg-white">
             <div className="mb-6 flex flex-col items-center gap-3">
               <div className="relative">
                 <Avatar className="h-24 w-24">
