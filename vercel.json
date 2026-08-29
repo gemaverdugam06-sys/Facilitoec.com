@@ -48,11 +48,7 @@
   "routes": [
     { "handle": "filesystem" },
     {
-      "src": "/assets/(.*)",
-      "dest": "/dist/client/assets/$1"
-    },
-    {
-      "src": "\\/(.*)",
+      "src": "/(.*)",
       "dest": "/api/index.js"
     }
   ]
