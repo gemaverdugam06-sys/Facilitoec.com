@@ -15,23 +15,11 @@ async function loadServer() {
   } catch (e1) {
     try {
       const absolutePath = join(__dirname, "../dist/server/server.js");
-      // Try importing using file:// URL for absolute path
       const absoluteFileUrl = `file://${absolutePath}`;
       serverModule = (await import(absoluteFileUrl)).default;
     } catch (e2) {
-      console.error("[Handler] Failed to load server from ../dist/server/server.js:", e1 && e1.stack ? e1.stack : e1);
-      console.error("[Handler] Also failed with absolute path (attempted file://):", e2 && e2.stack ? e2.stack : e2);
-      const checkPath = join(__dirname, "../dist/server/server.js");
-      console.error("[Handler] cwd:", process.cwd());
-      console.error("[Handler] exists (relative):", fs.existsSync(join(__dirname, "../dist/server/server.js")));
-      console.error("[Handler] exists (absolute):", fs.existsSync(checkPath));
-      // list files in dist/server for debugging
-      try {
-        console.error("[Handler] dist/server contents:", fs.readdirSync(join(__dirname, "../dist/server")).slice(0, 100));
-      } catch (re) {
-        console.error("[Handler] Could not list dist/server:", re && re.stack ? re.stack : re);
-      }
-      throw new Error("Could not load server module");
+      console.error("[Handler] Failed:", e1?.message);
+      throw new Error("Could not load server");
     }
   }
   return serverModule;
@@ -51,6 +39,9 @@ async function getRequestBody(req) {
       resolve(data);
     });
     req.on("error", reject);
+  });
+}
+
 function serveStatic(filePath, res) {
   try {
     if (!fs.existsSync(filePath)) {
@@ -66,21 +57,14 @@ function serveStatic(filePath, res) {
       js: "application/javascript",
       css: "text/css",
       json: "application/json",
-      svg: "image/svg+xml",
-      png: "image/png",
-      jpg: "image/jpeg",
-      gif: "image/gif",
-      webp: "image/webp",
-      woff: "font/woff",
-      woff2: "font/woff2",
-      ttf: "font/ttf",
     };
     res.statusCode = 200;
     res.setHeader("content-type", mimeTypes[ext] || "application/octet-stream");
     res.setHeader("cache-control", "public, max-age=31536000, immutable");
     res.end(content);
     return true;
-  } catch {
+  } catch (e) {
+    console.error("[serveStatic]", e?.message);
     return false;
   }
 }
@@ -89,7 +73,7 @@ export default async function handler(req, res) {
   try {
     const url = req.url ?? "/";
 
-    // Serve static assets directly
+    // Try to serve static assets
     if (url.startsWith("/assets/")) {
       const assetPath = join(__dirname, "../dist/client", url);
       if (serveStatic(assetPath, res)) {
@@ -122,11 +106,9 @@ export default async function handler(req, res) {
 
     res.end(responseBody);
   } catch (error) {
-    console.error("[vercel-handler] Error:", error instanceof Error ? error.stack : error);
+    console.error("[handler]", error?.message);
     res.statusCode = 500;
-    res.setHeader("content-type", "text/html; charset=utf-8");
-    res.end(
-      '<!doctype html><html lang="es"><body><h1>Error interno del servidor</h1><p>Por favor, intenta de nuevo.</p></body></html>'
-    );
+    res.setHeader("content-type", "text/html");
+    res.end("<h1>Error</h1>");
   }
 }
