@@ -26,6 +26,31 @@ interface Categoria {
   nombre: string;
 }
 
+// Configuración de validación de imágenes
+const IMAGE_CONFIG = {
+  ALLOWED_TYPES: ["image/jpeg", "image/png", "image/webp"],
+  MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
+  MAX_FILES: 8,
+};
+
+const validateFile = (file: File): { valid: boolean; error?: string } => {
+  if (!IMAGE_CONFIG.ALLOWED_TYPES.includes(file.type)) {
+    return {
+      valid: false,
+      error: `${file.name}: Solo JPG, PNG y WebP son permitidos.`,
+    };
+  }
+
+  if (file.size > IMAGE_CONFIG.MAX_FILE_SIZE) {
+    return {
+      valid: false,
+      error: `${file.name}: El archivo es muy grande (máx. 5MB).`,
+    };
+  }
+
+  return { valid: true };
+};
+
 const schema = z.object({
   titulo: z.string().trim().min(3, "Mínimo 3 caracteres").max(120),
   descripcion: z.string().trim().min(10, "Describe mejor tu producto").max(2000),
@@ -58,27 +83,84 @@ function PublicarPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    supabase
-      .from("categorias")
-      .select("id, nombre")
-      .order("orden")
-      .then(({ data }) => {
-        if (data) setCategorias(data);
+    const loadCategorias = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("categorias")
+          .select("id, nombre")
+          .order("orden");
+
+        if (error) throw error;
+
+        if (data) {
+          setCategorias(data);
+        }
+      } catch (err) {
+        console.error("Error cargando categorías:", err);
+        // No mostrar toast aquí porque es en componente montado
+      }
+    };
+
+    loadCategorias();
+  }, []);
+
+  // Limpiar Object URLs cuando el componente se desmonta
+  useEffect(() => {
+    return () => {
+      previews.forEach((url) => {
+        if (url && url.startsWith("blob:")) {
+          URL.revokeObjectURL(url);
+        }
       });
+    };
   }, []);
 
   const addFiles = (list: FileList | null) => {
     if (!list) return;
-    const arr = Array.from(list).slice(0, 8 - files.length);
-    setFiles((prev) => [...prev, ...arr]);
-    arr.forEach((f) => {
-      const r = new FileReader();
-      r.onload = () => setPreviews((prev) => [...prev, r.result as string]);
-      r.readAsDataURL(f);
+
+    const validated: File[] = [];
+    const errors: string[] = [];
+
+    for (const file of list) {
+      const validation = validateFile(file);
+      if (validation.valid) {
+        validated.push(file);
+      } else if (validation.error) {
+        errors.push(validation.error);
+      }
+    }
+
+    // Mostrar errores de validación
+    errors.forEach((err) => toast.error(err));
+
+    // Limitar cantidad total
+    const available = IMAGE_CONFIG.MAX_FILES - files.length;
+    const toAdd = validated.slice(0, available);
+
+    if (toAdd.length === 0) {
+      return;
+    }
+
+    setFiles((prev) => [...prev, ...toAdd]);
+
+    // Crear previews con Object URLs (más eficiente que Data URLs)
+    toAdd.forEach((f) => {
+      const url = URL.createObjectURL(f);
+      setPreviews((prev) => [...prev, url]);
     });
+
+    // Feedback positivo
+    if (toAdd.length > 0) {
+      toast.success(`${toAdd.length} imagen(s) agregada(s)`);
+    }
   };
 
   const removeFile = (i: number) => {
+    // Limpiar Object URL cuando se elimina
+    const url = previews[i];
+    if (url && url.startsWith("blob:")) {
+      URL.revokeObjectURL(url);
+    }
     setFiles((prev) => prev.filter((_, idx) => idx !== i));
     setPreviews((prev) => prev.filter((_, idx) => idx !== i));
   };

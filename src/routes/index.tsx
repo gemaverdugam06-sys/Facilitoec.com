@@ -56,14 +56,30 @@ function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.rpc("expire_promociones").then(() => {});
-    supabase
-      .from("categorias")
-      .select("id, nombre, icono")
-      .order("orden")
-      .then(({ data }) => {
-        if (data) setCategorias(data);
-      });
+    const loadCategorias = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("categorias")
+          .select("id, nombre, icono")
+          .order("orden");
+
+        if (error) throw error;
+
+        if (data) {
+          setCategorias(data);
+        }
+      } catch (err) {
+        console.error("Error cargando categorías:", err);
+        toast.error("No se cargaron las categorías. Por favor, recarga la página.");
+      }
+    };
+
+    loadCategorias();
+
+    // Expirar promociones vencidas
+    supabase.rpc("expire_promociones").catch((err) => {
+      console.error("Error expirando promociones:", err);
+    });
   }, []);
 
   const ciudadesDeProv = useMemo(() => {

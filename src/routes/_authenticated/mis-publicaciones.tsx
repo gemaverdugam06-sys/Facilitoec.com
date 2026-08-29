@@ -69,28 +69,47 @@ function MisPubs() {
 
       if (pErr) throw pErr;
 
-      const listaProductos = (prods as Pub[]) ?? [];
-
-      if (listaProductos.length > 0) {
-        // 2. Traemos por separado las transacciones para inyectarlas sin romper el servidor
-        const { data: txs } = await supabase
-          .from("transacciones")
-          .select("producto_id, estado_pago, notas_admin, created_at")
-          .in(
-            "producto_id",
-            listaProductos.map((p) => p.id),
+      // Optimizado: Una sola query con JOIN para mejor performance
+      const { data: productsWithTx, error: joinErr } = await supabase
+        .from("productos")
+        .select(`
+          id,
+          titulo,
+          descripcion,
+          precio,
+          imagenes,
+          activo,
+          created_at,
+          es_destacado,
+          tipo_promocion,
+          promocionado_hasta,
+          transacciones (
+            id,
+            estado_pago,
+            notas_admin,
+            created_at
           )
-          .order("created_at", { ascending: false });
+        `)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
-        // Asociamos cada transacción más reciente a su respectivo anuncio
-        listaProductos.forEach((p) => {
-          const txAsociada = (txs as TxResumen[] | null)?.find((t) => t.producto_id === p.id);
-          if (txAsociada) {
-            p.estado_pago = txAsociada.estado_pago;
-            p.notas_admin = txAsociada.notas_admin;
-          }
-        });
-      }
+      if (joinErr) throw joinErr;
+
+      // Procesar datos con transaccion mas reciente
+      const listaProductos = (productsWithTx || []).map((p: any) => ({
+        id: p.id,
+        titulo: p.titulo,
+        descripcion: p.descripcion,
+        precio: p.precio,
+        imagenes: p.imagenes,
+        activo: p.activo,
+        created_at: p.created_at,
+        es_destacado: p.es_destacado,
+        tipo_promocion: p.tipo_promocion,
+        promocionado_hasta: p.promocionado_hasta,
+        estado_pago: p.transacciones?.[0]?.estado_pago,
+        notas_admin: p.transacciones?.[0]?.notas_admin,
+      })) as Pub[];
 
       setItems(listaProductos);
     } catch (err: unknown) {

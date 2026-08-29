@@ -9,6 +9,7 @@ import {
   toE164Phone,
   verifyPhoneOtp,
 } from "@/lib/auth-utils";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { useI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,6 +79,22 @@ function AuthPage() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Verificar rate limit
+    const rateLimitResult = await checkRateLimit({
+      key: `signin:${email}`,
+      limit: 5,
+      window: 60 * 15, // 15 minutos
+    });
+
+    if (!rateLimitResult.success) {
+      const seconds = Math.ceil((rateLimitResult.resetIn || 0) / 1000);
+      const minutes = Math.ceil(seconds / 60);
+      return toast.error(
+        `Demasiados intentos. Intenta en ${minutes} minuto(s).`
+      );
+    }
+
     if (password.length < 8) return toast.error(t("password_min_8"));
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({
