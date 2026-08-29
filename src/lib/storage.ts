@@ -15,6 +15,7 @@ export function useSignedUrls(bucket: string, paths: string[] | null | undefined
       setUrls([]);
       return;
     }
+
     const now = Date.now();
     const need: string[] = [];
     const resolved: (string | null)[] = paths.map((p) => {
@@ -29,22 +30,32 @@ export function useSignedUrls(bucket: string, paths: string[] | null | undefined
       return;
     }
 
-    supabase.storage
-      .from(bucket)
-      .createSignedUrls(need, 60 * 60 * 24 * 7)
-      .then(({ data }) => {
-        if (!data) return;
-        data.forEach((d) => {
-          if (d.signedUrl && d.path) {
-            cache.set(`${bucket}:${d.path}`, {
-              url: d.signedUrl,
-              expires: now + 60 * 60 * 1000,
-            });
-          }
-        });
-        const final = paths.map((p) => cache.get(`${bucket}:${p}`)?.url ?? "");
-        setUrls(final.filter(Boolean));
-      });
+    try {
+      if (!supabase?.storage?.from) {
+        setUrls([]);
+        return;
+      }
+
+      supabase.storage
+        .from(bucket)
+        .createSignedUrls(need, 60 * 60 * 24 * 7)
+        .then(({ data }) => {
+          if (!data) return;
+          data.forEach((d) => {
+            if (d.signedUrl && d.path) {
+              cache.set(`${bucket}:${d.path}`, {
+                url: d.signedUrl,
+                expires: now + 60 * 60 * 1000,
+              });
+            }
+          });
+          const final = paths.map((p) => cache.get(`${bucket}:${p}`)?.url ?? "");
+          setUrls(final.filter(Boolean));
+        })
+        .catch(() => setUrls([]));
+    } catch {
+      setUrls([]);
+    }
   }, [bucket, paths?.join(",")]);
 
   return urls;

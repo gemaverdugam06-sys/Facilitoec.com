@@ -89,8 +89,37 @@ function createUnavailableSupabaseClient() {
     },
   };
 
+  const storageMethods = {
+    from() {
+      return {
+        upload() {
+          return Promise.resolve({ data: null, error: { message: unavailableMessage } });
+        },
+        update() {
+          return Promise.resolve({ data: null, error: { message: unavailableMessage } });
+        },
+        remove() {
+          return Promise.resolve({ data: null, error: { message: unavailableMessage } });
+        },
+        list() {
+          return Promise.resolve({ data: [], error: { message: unavailableMessage } });
+        },
+        createSignedUrl() {
+          return Promise.resolve({ data: { signedUrl: "", path: "" }, error: { message: unavailableMessage } });
+        },
+        createSignedUrls(paths: string[]) {
+          return Promise.resolve({
+            data: paths.map((path) => ({ signedUrl: "", path })),
+            error: { message: unavailableMessage },
+          });
+        },
+      };
+    },
+  };
+
   return {
     auth: authMethods,
+    storage: storageMethods,
     rpc() {
       return Promise.resolve({ data: null, error: { message: unavailableMessage } });
     },
