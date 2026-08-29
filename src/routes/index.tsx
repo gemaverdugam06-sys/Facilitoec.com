@@ -77,12 +77,22 @@ function Home() {
 
     loadCategorias();
 
-    // Expirar promociones vencidas
+    // Expirar promociones vencidas si la función existe en Supabase.
+    // Algunas instalaciones no tienen esta RPC aún; en ese caso no es un error fatal.
     (async () => {
       try {
-        await supabase.rpc("expire_promociones");
+        const { error } = await supabase.rpc("expire_promociones");
+        if (error) {
+          const message = String(error.message ?? "");
+          if (!/404|not found|does not exist|function.*not found/i.test(message)) {
+            console.error("Error expirando promociones:", error);
+          }
+        }
       } catch (err) {
-        console.error("Error expirando promociones:", err);
+        const message = err && typeof err === "object" && "message" in err ? String((err as { message?: string }).message ?? "") : String(err ?? "");
+        if (!/404|not found|does not exist|function.*not found/i.test(message)) {
+          console.error("Error expirando promociones:", err);
+        }
       }
     })();
   }, []);
