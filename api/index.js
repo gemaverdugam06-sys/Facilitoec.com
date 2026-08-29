@@ -51,15 +51,56 @@ async function getRequestBody(req) {
       resolve(data);
     });
     req.on("error", reject);
-  });
+function serveStatic(filePath, res) {
+  try {
+    if (!fs.existsSync(filePath)) {
+      return false;
+    }
+    const stat = fs.statSync(filePath);
+    if (!stat.isFile()) {
+      return false;
+    }
+    const content = fs.readFileSync(filePath);
+    const ext = filePath.split(".").pop();
+    const mimeTypes = {
+      js: "application/javascript",
+      css: "text/css",
+      json: "application/json",
+      svg: "image/svg+xml",
+      png: "image/png",
+      jpg: "image/jpeg",
+      gif: "image/gif",
+      webp: "image/webp",
+      woff: "font/woff",
+      woff2: "font/woff2",
+      ttf: "font/ttf",
+    };
+    res.statusCode = 200;
+    res.setHeader("content-type", mimeTypes[ext] || "application/octet-stream");
+    res.setHeader("cache-control", "public, max-age=31536000, immutable");
+    res.end(content);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export default async function handler(req, res) {
   try {
+    const url = req.url ?? "/";
+
+    // Serve static assets directly
+    if (url.startsWith("/assets/")) {
+      const assetPath = join(__dirname, "../dist/client", url);
+      if (serveStatic(assetPath, res)) {
+        return;
+      }
+    }
+
+    // Delegate to SSR server
     const server = await loadServer();
     const protocol = req.headers["x-forwarded-proto"] ?? "https";
     const host = req.headers.host ?? "localhost";
-    const url = req.url ?? "/";
     const fullUrl = `${protocol}://${host}${url}`;
 
     const body = await getRequestBody(req);
