@@ -18,7 +18,7 @@ import { Logo } from "@/components/Logo";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { OtpInput } from "@/components/auth/OtpInput";
-import { ShoppingBag, Loader2, Mail, Smartphone } from "lucide-react";
+import { ShoppingBag, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { toUserMessage } from "@/lib/error-messages";
 
@@ -34,7 +34,6 @@ function AuthPage() {
   const { user } = useAuth();
   const nav = useNavigate();
 
-  const [method, setMethod] = useState<"email" | "phone">("email");
   const [emailTab, setEmailTab] = useState<"signin" | "signup">("signin");
 
   const [email, setEmail] = useState("");
@@ -68,7 +67,7 @@ function AuthPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/verificar-telefono`,
+        redirectTo: `${window.location.origin}/`,
       },
     });
     setLoading(false);
@@ -110,15 +109,16 @@ function AuthPage() {
     e.preventDefault();
     if (name.trim().length < 2) return toast.error(t("name_required"));
     if (password.length < 8) return toast.error(t("password_min_8"));
-    const phone = toE164Phone(phoneRaw);
-    if (!phone) return toast.error(t("invalid_phone"));
+
+    const phone = phoneRaw.trim() ? toE164Phone(phoneRaw) : null;
+    if (phoneRaw.trim() && !phone) return toast.error(t("invalid_phone"));
 
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/verificar-telefono`,
+        emailRedirectTo: `${window.location.origin}/`,
         data: { full_name: name.trim() },
       },
     });
@@ -127,7 +127,7 @@ function AuthPage() {
       return toast.error(toUserMessage(error, "No se pudo crear la cuenta."));
     }
 
-    if (data.session) {
+    if (data.session && phone) {
       const linkErr = await linkPhoneToAccount(phone);
       setLoading(false);
       if (linkErr.error)
@@ -138,8 +138,8 @@ function AuthPage() {
     }
 
     setLoading(false);
-    toast.success(t("signup_check_email_then_phone"));
-    nav({ to: "/auth/verificar-telefono" });
+    toast.success(data.session ? t("welcome_back") : t("signup_check_email_then_phone"));
+    nav({ to: data.session ? "/" : "/auth", replace: true });
   };
 
   const sendPhoneCode = async () => {
@@ -191,217 +191,116 @@ function AuthPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="px-8 py-8">
-          <Tabs value={method} onValueChange={(v) => setMethod(v as "email" | "phone")}> 
-            <TabsList className="grid w-full grid-cols-2 overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/90 shadow-sm">
+          <Tabs value={emailTab} onValueChange={(v) => setEmailTab(v as "signin" | "signup")} className="space-y-4">
+            <TabsList className="grid w-full grid-cols-2 overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/90 p-1 shadow-sm">
               <TabsTrigger
-                value="email"
-                className="gap-1 border-r border-slate-700/80 bg-slate-950/90 text-slate-200 data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
+                value="signin"
+                className="rounded-xl border-0 bg-transparent text-slate-300 data-[state=active]:bg-slate-950 data-[state=active]:text-white data-[state=active]:shadow-md"
               >
-                <Mail className="h-4 w-4" /> {t("with_email")}
+                {t("sign_in")}
               </TabsTrigger>
               <TabsTrigger
-                value="phone"
-                className="gap-1 bg-slate-950/90 text-slate-200 data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
+                value="signup"
+                className="rounded-xl border-0 bg-transparent text-slate-300 data-[state=active]:bg-slate-950 data-[state=active]:text-white data-[state=active]:shadow-md"
               >
-                <Smartphone className="h-4 w-4" /> {t("with_phone")}
+                {t("sign_up")}
               </TabsTrigger>
             </TabsList>
 
-            {/* ── Correo ── */}
-            <TabsContent value="email">
-              <Tabs value={emailTab} onValueChange={(v) => setEmailTab(v as "signin" | "signup")}>
-                <TabsList className="mt-2 grid w-full grid-cols-2 overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/90 shadow-sm">
-                  <TabsTrigger
-                    value="signin"
-                    className="border-r border-slate-700/80 bg-slate-950/90 text-slate-200 data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
-                  >
-                    {t("sign_in")}
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="signup"
-                    className="bg-slate-950/90 text-slate-200 data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg"
-                  >
-                    {t("sign_up")}
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="signin">
-                  <form onSubmit={handleSignIn} className="space-y-3 pt-3">
-                    <div className="space-y-1">
-                      <Label htmlFor="email-in">{t("email")}</Label>
-                      <Input
-                        id="email-in"
-                        type="email"
-                        required
-                        autoComplete="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="pwd-in">{t("password")}</Label>
-                        <Link to="/auth/recuperar" className="text-xs text-primary hover:underline">
-                          {t("forgot_password")}
-                        </Link>
-                      </div>
-                      <Input
-                        id="pwd-in"
-                        type="password"
-                        required
-                        minLength={8}
-                        autoComplete="current-password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="bg-slate-900/90 border border-slate-700 text-white placeholder:text-slate-500"
-                      />
-                    </div>
-                    <Button type="submit" disabled={loading} className="w-full rounded-2xl bg-gradient-primary/95 border border-primary/80 text-white shadow-lg shadow-primary/10 hover:bg-gradient-primary">
-                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("sign_in")}
-                    </Button>
-                  </form>
-                </TabsContent>
-
-                <TabsContent value="signup">
-                  <form onSubmit={handleSignUp} className="space-y-3 pt-3">
-                    <div className="space-y-1">
-                      <Label htmlFor="name-up">{t("full_name")}</Label>
-                      <Input
-                        id="name-up"
-                        required
-                        autoComplete="name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 focus:border-primary/70"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="email-up">{t("email")}</Label>
-                      <Input
-                        id="email-up"
-                        type="email"
-                        required
-                        autoComplete="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 focus:border-primary/70"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="phone-up">{t("mobile_number")}</Label>
-                      <Input
-                        id="phone-up"
-                        type="tel"
-                        required
-                        placeholder="0991234567"
-                        value={phoneRaw}
-                        onChange={(e) => setPhoneRaw(e.target.value)}
-                        className="bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 focus:border-primary/70"
-                      />
-                      <p className="text-[11px] text-muted-foreground">
-                        {t("phone_verify_on_signup")}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="pwd-up">{t("password")}</Label>
-                      <Input
-                        id="pwd-up"
-                        type="password"
-                        required
-                        minLength={8}
-                        autoComplete="new-password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 focus:border-primary/70"
-                      />
-                    </div>
-                    <Button type="submit" disabled={loading} className="w-full rounded-2xl bg-gradient-primary/95 border border-primary/80 text-white shadow-lg shadow-primary/10 hover:bg-gradient-primary">
-                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("sign_up")}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
+            <TabsContent value="signin">
+              <form onSubmit={handleSignIn} className="space-y-3 pt-3">
+                <div className="space-y-2">
+                  <Label htmlFor="email-in">{t("email")}</Label>
+                  <Input
+                    id="email-in"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 focus:border-primary/70"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="pwd-in">{t("password")}</Label>
+                    <Link to="/auth/recuperar" className="text-xs text-primary hover:underline">
+                      {t("forgot_password")}
+                    </Link>
+                  </div>
+                  <Input
+                    id="pwd-in"
+                    type="password"
+                    required
+                    minLength={8}
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 focus:border-primary/70"
+                  />
+                </div>
+                <Button type="submit" disabled={loading} className="w-full rounded-2xl border border-primary/80 bg-gradient-primary/95 text-white shadow-lg shadow-primary/10 hover:bg-gradient-primary">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("sign_in")}
+                </Button>
+              </form>
             </TabsContent>
 
-            {/* ── Teléfono (SMS) ── */}
-            <TabsContent value="phone">
-              {phoneStep === "input" ? (
-                <div className="space-y-3 pt-3">
-                  <div className="space-y-1">
-                    <Label htmlFor="phone-in">{t("mobile_number")}</Label>
-                    <Input
-                      id="phone-in"
-                      type="tel"
-                      required
-                      placeholder="0991234567"
-                      value={phoneRaw}
-                      onChange={(e) => setPhoneRaw(e.target.value)}
-                      className="bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 focus:border-primary/70"
-                    />
-                    <p className="text-[11px] text-slate-400">{t("phone_format_hint")}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="name-phone">{t("full_name")}</Label>
-                    <Input
-                      id="name-phone"
-                      placeholder={t("optional_on_login")}
-                      value={phoneSignupName}
-                      onChange={(e) => setPhoneSignupName(e.target.value)}
-                      className="bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 focus:border-primary/70"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    disabled={loading}
-                    className="w-full rounded-2xl bg-gradient-primary/95 border border-primary/80 text-white shadow-lg shadow-primary/10 hover:bg-gradient-primary"
-                    onClick={sendPhoneCode}
-                  >
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("send_sms_code")}
-                  </Button>
-                  <p className="text-center text-xs text-muted-foreground">
-                    {t("phone_login_hint")}
+            <TabsContent value="signup">
+              <form onSubmit={handleSignUp} className="space-y-3 pt-3">
+                <div className="space-y-2">
+                  <Label htmlFor="name-up">{t("full_name")}</Label>
+                  <Input
+                    id="name-up"
+                    required
+                    autoComplete="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 focus:border-primary/70"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email-up">{t("email")}</Label>
+                  <Input
+                    id="email-up"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 focus:border-primary/70"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone-up">{t("mobile_number")}</Label>
+                  <Input
+                    id="phone-up"
+                    type="tel"
+                    placeholder="0991234567"
+                    value={phoneRaw}
+                    onChange={(e) => setPhoneRaw(e.target.value)}
+                    className="bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 focus:border-primary/70"
+                  />
+                  <p className="text-[11px] text-slate-400">
+                    Opcional: podrás verificar tu número dentro de la app después de crear la cuenta.
                   </p>
                 </div>
-              ) : (
-                <div className="space-y-4 pt-3">
-                  <p className="text-center text-sm text-muted-foreground">
-                    {t("otp_sent_to")} <strong>{phoneE164}</strong>
-                  </p>
-                  <div className="flex justify-center">
-                    <OtpInput value={otp} onChange={setOtp} disabled={loading} />
-                  </div>
-                  <Button
-                    type="button"
-                    disabled={loading || otp.length < 6}
-                    className="w-full rounded-2xl bg-gradient-primary/95 border border-primary/80 text-white shadow-lg shadow-primary/10 hover:bg-gradient-primary"
-                    onClick={verifyPhoneCode}
-                  >
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("verify_and_enter")}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="w-full"
-                    disabled={loading || cooldown > 0}
-                    onClick={sendPhoneCode}
-                  >
-                    {cooldown > 0 ? `${t("resend_code")} (${cooldown}s)` : t("resend_code")}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="link"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => {
-                      setPhoneStep("input");
-                      setOtp("");
-                    }}
-                  >
-                    {t("change_phone")}
-                  </Button>
+                <div className="space-y-2">
+                  <Label htmlFor="pwd-up">{t("password")}</Label>
+                  <Input
+                    id="pwd-up"
+                    type="password"
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 focus:border-primary/70"
+                  />
                 </div>
-              )}
+                <Button type="submit" disabled={loading} className="w-full rounded-2xl border border-primary/80 bg-gradient-primary/95 text-white shadow-lg shadow-primary/10 hover:bg-gradient-primary">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("sign_up")}
+                </Button>
+              </form>
             </TabsContent>
           </Tabs>
 

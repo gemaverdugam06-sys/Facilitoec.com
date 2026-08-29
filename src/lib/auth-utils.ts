@@ -9,10 +9,10 @@ export function toE164Phone(raw: string): string | null {
   return `+${digits}`;
 }
 
-/** Cuenta verificada por SMS (confirmación obligatoria vía celular). */
+/** Cuenta verificada cuando confirma correo o teléfono. */
 export function isUserVerified(user: User | null | undefined): boolean {
   if (!user) return false;
-  return !!user.phone_confirmed_at;
+  return !!(user.email_confirmed_at || user.phone_confirmed_at);
 }
 
 export async function checkIsAdmin(userId: string): Promise<boolean> {
