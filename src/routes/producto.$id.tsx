@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
-import { useSignedUrls } from "@/lib/storage";
+import { useSignedUrl, useSignedUrls } from "@/lib/storage";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -51,15 +51,38 @@ function ProductoPage() {
   const images = useSignedUrls("productos", p?.imagenes ?? []);
   const vendorAvatarUrl = useSignedUrl("avatars", p?.profiles?.avatar_url);
   useEffect(() => {
-    supabase
-      .from("productos")
-      .select("*, profiles!productos_user_profile_fk(nombre_completo, avatar_url, ciudad)")
-      .eq("id", id)
-      .single()
-      .then(({ data }) => {
-        setP(data as unknown as Producto);
-        setLoading(false);
-      });
+    let active = true;
+
+    const loadProducto = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("productos")
+          .select("*, profiles!productos_user_profile_fk(nombre_completo, avatar_url, ciudad)")
+          .eq("id", id)
+          .maybeSingle();
+
+        if (!active) return;
+
+        if (error) {
+          console.error("Error cargando producto:", error);
+          setP(null);
+          return;
+        }
+
+        setP((data as Producto | null) ?? null);
+      } catch (error) {
+        console.error("Error inesperado cargando producto:", error);
+        if (active) setP(null);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    loadProducto();
+
+    return () => {
+      active = false;
+    };
   }, [id]);
 
   const isVerified = isUserVerified(user);
