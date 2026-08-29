@@ -1,7 +1,7 @@
 {
   "version": 2,
   "buildCommand": "npm run build",
-  "outputDirectory": "dist",
+  "outputDirectory": "dist/client",
   "env": {
     "NODE_ENV": "production"
   },
@@ -52,8 +52,7 @@
   ],
   "routes": [
     {
-      "src": "/assets/(.*)",
-      "dest": "/client/assets/$1"
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
