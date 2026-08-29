@@ -6,6 +6,8 @@ interface AuthCtx {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  roleLoading: boolean;
+  isAdmin: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -13,12 +15,16 @@ const Ctx = createContext<AuthCtx>({
   user: null,
   session: null,
   loading: true,
+  roleLoading: false,
+  isAdmin: false,
   signOut: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [roleLoading, setRoleLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -32,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if ((supabase as typeof supabase & { __unavailable?: boolean }).__unavailable) {
       setSession(null);
+      setIsAdmin(false);
       finish();
       return;
     }
@@ -47,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const timer = window.setTimeout(() => {
       if (!active) return;
       setSession(null);
+      setIsAdmin(false);
       finish();
     }, 4000);
 
@@ -60,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .catch(() => {
         if (!active) return;
         setSession(null);
+        setIsAdmin(false);
         finish();
       })
       .finally(() => {
@@ -73,6 +82,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    const userId = session?.user?.id;
+
+    if (!userId) {
+      setIsAdmin(false);
+      setRoleLoading(false);
+      return;
+    }
+
+    let active = true;
+    setRoleLoading(true);
+
+    const refreshRole = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .limit(50);
+
+        if (!active) return;
+
+        const roles = Array.isArray(data)
+          ? data.map((row) => row?.role).filter((role): role is string => Boolean(role))
+          : [];
+
+        setIsAdmin(!error && roles.includes("admin"));
+      } catch {
+        if (active) setIsAdmin(false);
+      } finally {
+        if (active) setRoleLoading(false);
+      }
+    };
+
+    refreshRole();
+
+    return () => {
+      active = false;
+    };
+  }, [session?.user?.id, session?.access_token]);
+
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
@@ -82,7 +132,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <Ctx.Provider value={{ user: session?.user ?? null, session, loading, signOut }}>
+    <Ctx.Provider
+      value={{
+        user: session?.user ?? null,
+        session,
+        loading,
+        roleLoading,
+        isAdmin,
+        signOut,
+      }}
+    >
       {children}
     </Ctx.Provider>
   );

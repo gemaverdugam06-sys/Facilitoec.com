@@ -15,12 +15,27 @@ export function isUserVerified(user: User | null | undefined): boolean {
   return !!(user.email_confirmed_at || user.phone_confirmed_at);
 }
 
+export async function getUserRole(userId: string): Promise<string | null> {
+  if (!userId) return null;
+
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .limit(50);
+
+  if (error) {
+    console.error("Error consultando el rol del usuario en user_roles:", error);
+    return null;
+  }
+
+  const roles = Array.isArray(data) ? data.map((row) => row?.role).filter(Boolean) : [];
+  return roles.includes("admin") ? "admin" : roles[0] ?? null;
+}
+
 export async function checkIsAdmin(userId: string): Promise<boolean> {
-  const { data, error } = await supabase.rpc("has_role", {
-    _user_id: userId,
-    _role: "admin",
-  });
-  return !error && !!data;
+  const role = await getUserRole(userId);
+  return role === "admin";
 }
 
 /** Envía OTP SMS al teléfono (login o registro). */

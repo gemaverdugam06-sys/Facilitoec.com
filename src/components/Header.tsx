@@ -1,8 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth";
-import { checkIsAdmin } from "@/lib/auth-utils";
 import { useI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
@@ -17,19 +15,10 @@ import {
 import { useUnreadChats } from "@/hooks/use-unread";
 
 export function Header() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin, roleLoading } = useAuth();
   const { t, lang, setLang } = useI18n();
   const navigate = useNavigate();
   const { total: unread } = useUnreadChats();
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    if (!user) {
-      setIsAdmin(false);
-      return;
-    }
-    checkIsAdmin(user.id).then(setIsAdmin);
-  }, [user?.id]);
 
   return (
     <motion.header
@@ -100,7 +89,7 @@ export function Header() {
                       </span>
                     )}
                   </DropdownMenuItem>
-                  {isAdmin && (
+                  {!roleLoading && isAdmin && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => navigate({ to: "/admin" })}>

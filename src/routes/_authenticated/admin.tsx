@@ -10,8 +10,9 @@ const AdminPanel = lazy(() =>
 
 export const Route = createFileRoute("/_authenticated/admin")({
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/auth" });
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) throw redirect({ to: "/auth" });
+
     const admin = await checkIsAdmin(data.user.id);
     if (!admin) throw redirect({ to: "/" });
   },
