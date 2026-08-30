@@ -4,7 +4,7 @@ import { Header } from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ShieldCheck, ShieldX, Eye, Lock } from "lucide-react";
+import { Loader2, ShieldCheck, ShieldX, Eye, Lock, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { promoEndDate } from "@/lib/promo-plans";
@@ -26,12 +26,20 @@ interface Tx {
 
 const normalizePaymentState = (value: string | null | undefined) => {
   const raw = String(value ?? "").trim().toUpperCase();
-  return raw.replace(/[-_\s]+/g, " ").trim();
+  return raw.replace(/[-_\s]+/g, " ").replace(/\s+/g, " ").trim();
 };
 
 const isPendingState = (value?: string | null) => {
   const normalized = normalizePaymentState(value);
-  return ["PENDIENTE", "PENDING", "EN REVISION", "EN REVISIÓN", "REVISION", "REVISIÓN", "EN PROCESO"].includes(normalized);
+  return [
+    "PENDIENTE",
+    "PENDING",
+    "EN REVISION",
+    "EN REVISIÓN",
+    "REVISION",
+    "REVISIÓN",
+    "EN PROCESO",
+  ].includes(normalized);
 };
 
 const isCompletedState = (value?: string | null) => {
@@ -43,6 +51,8 @@ const isRejectedState = (value?: string | null) => {
   const normalized = normalizePaymentState(value);
   return ["RECHAZADO", "REJECTED", "CANCELADO", "RECHAZADA"].includes(normalized);
 };
+
+const isHistoryState = (value?: string | null) => isCompletedState(value) || isRejectedState(value);
 
 export function AdminPanel() {
   const { user } = useAuth();
@@ -89,14 +99,45 @@ export function AdminPanel() {
     }
   };
 
+  const onEliminarComprobante = async (tx: Tx) => {
+    if (!tx.comprobante_url) return;
+
+    const ok = window.confirm("¿Deseas eliminar este comprobante adjunto?");
+    if (!ok) return;
+
+    try {
+      const { error: removeError } = await supabase.storage
+        .from("comprobantes")
+        .remove([tx.comprobante_url]);
+      if (removeError) throw removeError;
+
+      const { error: updateError } = await supabase
+        .from("transacciones")
+        .update({ comprobante_url: null })
+        .eq("id", tx.id);
+      if (updateError) throw updateError;
+
+      setTxs((prev) =>
+        prev.map((item) => (item.id === tx.id ? { ...item, comprobante_url: null } : item)),
+      );
+
+      toast.success("Comprobante eliminado");
+      await loadTransactions();
+    } catch (error) {
+      console.error("Error al eliminar comprobante:", error);
+      toast.error("No se pudo eliminar el comprobante");
+    }
+  };
+
   const onAprobar = async (tx: Tx) => {
     setWorking(tx.id);
     const mensajeAprobado = "Tu pago ha sido aprobado correctamente.";
+    const nuevoEstado = "COMPLETADO";
 
     setTxs((prev) =>
       prev.map((item) =>
         item.id === tx.id
-          ? { ...item, estado_pago: "COMPLETADO", notas_admin: mensajeAprobado }
+          ? { ...item, estado_pago: nuevoEstado, notas_admin: mensajeAprobado }
           : item,
       ),
     );
@@ -105,7 +146,7 @@ export function AdminPanel() {
       const { error: txErr } = await supabase
         .from("transacciones")
         .update({
-          estado_pago: "COMPLETADO",
+          estado_pago: nuevoEstado,
           notas_admin: mensajeAprobado,
         })
         .eq("id", tx.id);
@@ -144,17 +185,18 @@ export function AdminPanel() {
     }
     setWorking(id);
     const mensajeRechazo = `Tu pago ha sido rechazado. Revisa los detalles de tu pago. Motivo: ${motivo}`;
+    const nuevoEstado = "RECHAZADO";
 
     setTxs((prev) =>
       prev.map((item) =>
-        item.id === id ? { ...item, estado_pago: "RECHAZADO", notas_admin: mensajeRechazo } : item,
+        item.id === id ? { ...item, estado_pago: nuevoEstado, notas_admin: mensajeRechazo } : item,
       ),
     );
 
     try {
       const { error } = await supabase
         .from("transacciones")
-        .update({ estado_pago: "RECHAZADO", notas_admin: mensajeRechazo })
+        .update({ estado_pago: nuevoEstado, notas_admin: mensajeRechazo })
         .eq("id", id);
       if (error) throw error;
       toast.success("Transacción rechazada.");
@@ -184,8 +226,8 @@ export function AdminPanel() {
     );
   }
 
-  const pendientes = txs.filter((t) => isPendingState(t.estado_pago));
-  const otras = txs.filter((t) => !isPendingState(t.estado_pago));
+  const pendientes = txs.filter((t) => isPendingState(t.estado_pago) && !isHistoryState(t.estado_pago));
+  const otras = txs.filter((t) => !isPendingState(t.estado_pago) || isHistoryState(t.estado_pago));
 
   return (
     <div className="min-h-screen bg-background">
@@ -226,13 +268,23 @@ export function AdminPanel() {
                     </p>
                     <div className="flex flex-wrap gap-2 pt-1">
                       {t.comprobante_url && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => verComprobante(t.comprobante_url!)}
-                        >
-                          <Eye className="mr-1 h-4 w-4" /> Ver comprobante
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => verComprobante(t.comprobante_url!)}
+                          >
+                            <Eye className="mr-1 h-4 w-4" /> Ver comprobante
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => onEliminarComprobante(t)}
+                          >
+                            <Trash2 className="mr-1 h-4 w-4" /> Eliminar
+                          </Button>
+                        </>
                       )}
                       <Button
                         size="sm"

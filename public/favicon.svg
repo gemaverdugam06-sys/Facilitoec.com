@@ -1,17 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="FacilitoEC favicon">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" role="img" aria-label="FacilitoEC favicon">
   <defs>
-    <linearGradient id="facilitog" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0%" stop-color="#7c3aed"/>
-      <stop offset="55%" stop-color="#2563eb"/>
-      <stop offset="100%" stop-color="#14b8a6"/>
-    </linearGradient>
-    <linearGradient id="facilitofill" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0%" stop-color="#f8fafc"/>
-      <stop offset="100%" stop-color="#dbeafe"/>
+    <linearGradient id="f-logo-gradient" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="55%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
     </linearGradient>
   </defs>
-  <rect width="128" height="128" rx="30" fill="#0b1020"/>
-  <path d="M40 30h44v14H57v25h25v14H57v26H40V30Z" fill="url(#facilitog)"/>
-  <path d="M65 30h34v14H76v24h22v14H76v26H65V30Z" fill="url(#facilitofill)" opacity="0.96"/>
-  <rect x="76" y="86" width="18" height="12" rx="3" fill="#34d399"/>
+
+  <path d="M35 12C24 12 20 19 20 29V89C20 100 27 108 38 108H52V27H35V12Z" fill="url(#f-logo-gradient)" opacity="0.18"/>
+  <path d="M44 15H92C100 15 106 21 106 29V39H79V50H100V60H79V89H61V60H44V50H61V39H44V15Z" fill="url(#f-logo-gradient)"/>
+  <path d="M108 22H126C134 22 140 28 140 36V40H122V47H140V53H122V86H108V53H92V47H108V22Z" fill="url(#f-logo-gradient)"/>
+  <path d="M71 71H128V83C128 93 120 101 110 101H84C74 101 66 93 66 83V71H71Z" fill="url(#f-logo-gradient)"/>
+  <path d="M82 63H112C121 63 128 70 128 79V83H82V63Z" fill="none" stroke="#f4ecff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="89" cy="101" r="9" fill="none" stroke="#f4ecff" stroke-width="6"/>
+  <circle cx="120" cy="101" r="9" fill="none" stroke="#f4ecff" stroke-width="6"/>
+  <path d="M92 101H116" stroke="#f4ecff" stroke-width="5" stroke-linecap="round"/>
+  <path d="M129 71L143 71" stroke="#f4ecff" stroke-width="5" stroke-linecap="round"/>
+  <path d="M40 15L55 15" stroke="#f4ecff" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
 </svg>

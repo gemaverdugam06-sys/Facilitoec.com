@@ -30,8 +30,8 @@ export function Header() {
       <div className="container mx-auto flex h-16 items-center gap-3 px-4">
         <Link to="/" className="flex items-center gap-2 font-bold">
           <Logo className="h-9 w-9 drop-shadow-sm" />
-          <span className="logo-heading text-lg tracking-tight">
-            FACILITO<span className="text-gradient-primary">EC</span>
+          <span className="text-[1.9rem] font-black leading-none tracking-[-0.06em] text-slate-950">
+            FACILITOEC
           </span>
         </Link>
 

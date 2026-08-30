@@ -18,7 +18,7 @@ import { Logo } from "@/components/Logo";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { OtpInput } from "@/components/auth/OtpInput";
-import { ShoppingBag, Loader2 } from "lucide-react";
+import { ShoppingBag, Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { toUserMessage } from "@/lib/error-messages";
 
@@ -49,6 +49,8 @@ function AuthPage() {
 
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const runWithLoadingGuard = async <T,>(work: () => Promise<T>): Promise<T | undefined> => {
     setLoading(true);
@@ -300,16 +302,26 @@ function AuthPage() {
                       {t("forgot_password")}
                     </Link>
                   </div>
-                  <Input
-                    id="pwd-in"
-                    type="password"
-                    required
-                    minLength={8}
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 focus:border-primary/70"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="pwd-in"
+                      type={showPassword ? "text" : "password"}
+                      required
+                      minLength={8}
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 focus:border-primary/70 pr-10"
+                    />
+                    <button
+                      type="button"
+                      aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-white"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
                 <Button type="submit" disabled={loading} className="w-full rounded-2xl border border-primary/80 bg-gradient-primary/95 text-white shadow-lg shadow-primary/10 hover:bg-gradient-primary">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("sign_in")}
@@ -358,29 +370,49 @@ function AuthPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="pwd-up">{t("password")}</Label>
-                  <Input
-                    id="pwd-up"
-                    type="password"
-                    required
-                    minLength={8}
-                    autoComplete="new-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 focus:border-primary/70"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="pwd-up"
+                      type={showPassword ? "text" : "password"}
+                      required
+                      minLength={8}
+                      autoComplete="new-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 focus:border-primary/70 pr-10"
+                    />
+                    <button
+                      type="button"
+                      aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-white"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="pwd-confirm-up">{t("confirm_password")}</Label>
-                  <Input
-                    id="pwd-confirm-up"
-                    type="password"
-                    required
-                    minLength={8}
-                    autoComplete="new-password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 focus:border-primary/70"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="pwd-confirm-up"
+                      type={showConfirmPassword ? "text" : "password"}
+                      required
+                      minLength={8}
+                      autoComplete="new-password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 focus:border-primary/70 pr-10"
+                    />
+                    <button
+                      type="button"
+                      aria-label={showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                      onClick={() => setShowConfirmPassword((v) => !v)}
+                      className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-white"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
                 <Button type="submit" disabled={loading} className="w-full rounded-2xl border border-primary/80 bg-gradient-primary/95 text-white shadow-lg shadow-primary/10 hover:bg-gradient-primary">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("sign_up")}
