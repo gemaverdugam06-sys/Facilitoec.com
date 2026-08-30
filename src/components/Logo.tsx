@@ -1,38 +1,24 @@
 export function Logo({ className = "h-9 w-9" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 48 48" className={className} aria-hidden="true">
+    <svg viewBox="0 0 64 64" className={className} aria-hidden="true" role="img">
       <defs>
         <linearGradient id="facilitologo-gradient" x1="0" x2="1" y1="0" y2="1">
           <stop offset="0%" stopColor="#7c3aed" />
-          <stop offset="55%" stopColor="#ff4d6d" />
-          <stop offset="100%" stopColor="#06b6d4" />
+          <stop offset="55%" stopColor="#8b5cf6" />
+          <stop offset="100%" stopColor="#22c55e" />
         </linearGradient>
       </defs>
 
-      <rect x="2" y="2" width="44" height="44" rx="12" fill="#0b1020" />
+      <rect x="4" y="4" width="56" height="56" rx="18" fill="#071a2e" />
       <path
-        d="M15 10.5h15.5v4.5H20.5V22h10.2v4.5H20.5v11.5H15V10.5Z"
+        d="M34 8 18 34h11l-4.8 22L45 28H34l5-20Z"
         fill="url(#facilitologo-gradient)"
       />
       <path
-        d="M25.8 10.5h8.7v4.5h-4.2v7.5h4.2v4.5h-4.2v11.5h-4.5V10.5Z"
-        fill="url(#facilitologo-gradient)"
-        opacity="0.96"
+        d="M29 10.5 21 26h8.5L26 39l12.5-17H31l3.5-11.5Z"
+        fill="#f8fafc"
+        opacity="0.18"
       />
-      <path
-        d="M13.5 29.5h18.5v5.5c0 4.1-3.3 7.4-7.4 7.4H19.5c-4.1 0-7.4-3.3-7.4-7.4v-5.5h1.4Z"
-        fill="url(#facilitologo-gradient)"
-      />
-      <path
-        d="M19 30.5h9.5c1.6 0 2.9 1.3 2.9 2.9v1.1H16.1v-1.1c0-1.6 1.3-2.9 2.9-2.9Z"
-        fill="none"
-        stroke="#f5f3ff"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="20.5" cy="37.8" r="2.6" fill="none" stroke="#f5f3ff" strokeWidth="1.8" />
-      <circle cx="30.8" cy="37.8" r="2.6" fill="none" stroke="#f5f3ff" strokeWidth="1.8" />
     </svg>
   );
 }
