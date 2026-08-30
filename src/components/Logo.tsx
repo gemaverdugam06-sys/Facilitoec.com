@@ -3,8 +3,9 @@ export function Logo({ className = "h-9 w-9" }: { className?: string }) {
     <svg viewBox="0 0 48 48" className={className} aria-hidden="true">
       <defs>
         <linearGradient id="facilitologo-gradient" x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0%" stopColor="#8b5cf6" />
-          <stop offset="100%" stopColor="#6d28d9" />
+          <stop offset="0%" stopColor="#7c3aed" />
+          <stop offset="55%" stopColor="#ff4d6d" />
+          <stop offset="100%" stopColor="#06b6d4" />
         </linearGradient>
       </defs>
 
@@ -16,7 +17,7 @@ export function Logo({ className = "h-9 w-9" }: { className?: string }) {
       <path
         d="M25.8 10.5h8.7v4.5h-4.2v7.5h4.2v4.5h-4.2v11.5h-4.5V10.5Z"
         fill="url(#facilitologo-gradient)"
-        opacity="0.92"
+        opacity="0.96"
       />
       <path
         d="M13.5 29.5h18.5v5.5c0 4.1-3.3 7.4-7.4 7.4H19.5c-4.1 0-7.4-3.3-7.4-7.4v-5.5h1.4Z"
