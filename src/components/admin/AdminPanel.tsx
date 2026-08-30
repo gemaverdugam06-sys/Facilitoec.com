@@ -24,8 +24,25 @@ interface Tx {
   profiles: { nombre_completo: string | null } | null;
 }
 
-const normalizePaymentState = (value: string | null | undefined) =>
-  String(value ?? "").trim().toUpperCase();
+const normalizePaymentState = (value: string | null | undefined) => {
+  const raw = String(value ?? "").trim().toUpperCase();
+  return raw.replace(/[-_\s]+/g, " ").trim();
+};
+
+const isPendingState = (value?: string | null) => {
+  const normalized = normalizePaymentState(value);
+  return ["PENDIENTE", "PENDING", "EN REVISION", "EN REVISIÓN", "REVISION", "REVISIÓN", "EN PROCESO"].includes(normalized);
+};
+
+const isCompletedState = (value?: string | null) => {
+  const normalized = normalizePaymentState(value);
+  return ["COMPLETADO", "COMPLETED", "APROBADO", "APPROVED", "ACEPTADO"].includes(normalized);
+};
+
+const isRejectedState = (value?: string | null) => {
+  const normalized = normalizePaymentState(value);
+  return ["RECHAZADO", "REJECTED", "CANCELADO", "RECHAZADA"].includes(normalized);
+};
 
 export function AdminPanel() {
   const { user } = useAuth();
@@ -74,9 +91,17 @@ export function AdminPanel() {
 
   const onAprobar = async (tx: Tx) => {
     setWorking(tx.id);
-    try {
-      const mensajeAprobado = "Tu pago ha sido aprobado correctamente.";
+    const mensajeAprobado = "Tu pago ha sido aprobado correctamente.";
 
+    setTxs((prev) =>
+      prev.map((item) =>
+        item.id === tx.id
+          ? { ...item, estado_pago: "COMPLETADO", notas_admin: mensajeAprobado }
+          : item,
+      ),
+    );
+
+    try {
       const { error: txErr } = await supabase
         .from("transacciones")
         .update({
@@ -100,6 +125,11 @@ export function AdminPanel() {
       await loadTransactions();
     } catch (error) {
       console.error("Error al aprobar transacción:", error);
+      setTxs((prev) =>
+        prev.map((item) =>
+          item.id === tx.id ? { ...item, estado_pago: tx.estado_pago, notas_admin: tx.notas_admin } : item,
+        ),
+      );
       toast.error("Error al aprobar transacción");
     } finally {
       setWorking(null);
@@ -113,8 +143,15 @@ export function AdminPanel() {
       return;
     }
     setWorking(id);
+    const mensajeRechazo = `Tu pago ha sido rechazado. Revisa los detalles de tu pago. Motivo: ${motivo}`;
+
+    setTxs((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, estado_pago: "RECHAZADO", notas_admin: mensajeRechazo } : item,
+      ),
+    );
+
     try {
-      const mensajeRechazo = `Tu pago ha sido rechazado. Revisa los detalles de tu pago. Motivo: ${motivo}`;
       const { error } = await supabase
         .from("transacciones")
         .update({ estado_pago: "RECHAZADO", notas_admin: mensajeRechazo })
@@ -124,6 +161,11 @@ export function AdminPanel() {
       await loadTransactions();
     } catch (error) {
       console.error("Error al rechazar transacción:", error);
+      setTxs((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, estado_pago: "PENDIENTE", notas_admin: mensajeRechazo } : item,
+        ),
+      );
       toast.error("Error al rechazar transacción");
     } finally {
       setWorking(null);
@@ -142,12 +184,8 @@ export function AdminPanel() {
     );
   }
 
-  const pendientes = txs.filter(
-    (t) => normalizePaymentState(t.estado_pago) === "PENDIENTE",
-  );
-  const otras = txs.filter(
-    (t) => normalizePaymentState(t.estado_pago) !== "PENDIENTE",
-  );
+  const pendientes = txs.filter((t) => isPendingState(t.estado_pago));
+  const otras = txs.filter((t) => !isPendingState(t.estado_pago));
 
   return (
     <div className="min-h-screen bg-background">
