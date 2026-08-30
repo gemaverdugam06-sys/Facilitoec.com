@@ -1,18 +1,34 @@
+import { useId } from "react";
+
 export function Logo({ className = "h-9 w-9" }: { className?: string }) {
+  const gradId = useId();
+  const accentId = useId();
+
   return (
     <svg viewBox="0 0 48 48" className={className} aria-hidden="true">
       <defs>
-        <linearGradient id="facilito-logo-grad" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#7c3aed" />
-          <stop offset="50%" stopColor="#2563eb" />
+          <stop offset="55%" stopColor="#2563eb" />
           <stop offset="100%" stopColor="#14b8a6" />
         </linearGradient>
+        <linearGradient id={accentId} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#f8fafc" />
+          <stop offset="100%" stopColor="#dbeafe" />
+        </linearGradient>
       </defs>
-      <rect x="2" y="2" width="44" height="44" rx="12" fill="#0b1020" />
-      <rect x="4" y="4" width="40" height="40" rx="10" fill="url(#facilito-logo-grad)" opacity="0.98" />
-      <path d="M14 32V16h9.8c6.5 0 10.4 3.7 10.4 9.7 0 6-3.9 9.7-10.4 9.7H20v5.6h-6zm6-7.5h3.4c3.2 0 5.1-1.8 5.1-4.7 0-2.9-1.9-4.7-5.1-4.7H20v9.4z" fill="white" />
-      <path d="M31 16h6v17h-6z" fill="white" opacity="0.92" />
-      <path d="M31 16h13v6H31z" fill="#d1fae5" opacity="0.95" />
+
+      <rect x="3" y="3" width="42" height="42" rx="14" fill="#0b1020" />
+      <path
+        d="M16 12.5h16v4.3H21.5v7.6h9.4v4.1h-9.4v9.1H16v-25.1Z"
+        fill={`url(#${gradId})`}
+      />
+      <path
+        d="M24.6 12.5h12.2v4.1H29.2v7.1h7.7v4.2h-7.7v9.1H24.6v-24.5Z"
+        fill={`url(#${accentId})`}
+        opacity="0.96"
+      />
+      <rect x="29.5" y="31.5" width="7" height="4.2" rx="1.1" fill="#34d399" />
     </svg>
   );
 }

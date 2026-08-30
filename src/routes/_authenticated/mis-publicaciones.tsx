@@ -44,6 +44,9 @@ interface Pub {
   notas_admin?: string | null;
 }
 
+const normalizePaymentState = (value?: string | null) =>
+  String(value ?? "").trim().toUpperCase();
+
 export const Route = createFileRoute("/_authenticated/mis-publicaciones")({
   component: MisPubs,
 });
@@ -104,6 +107,8 @@ function MisPubs() {
             : latest;
         }, null);
 
+        const estadoPago = normalizePaymentState(latestTx?.estado_pago);
+
         return {
           id: p.id,
           titulo: p.titulo,
@@ -115,7 +120,7 @@ function MisPubs() {
           es_destacado: p.es_destacado,
           tipo_promocion: p.tipo_promocion,
           promocionado_hasta: p.promocionado_hasta,
-          estado_pago: latestTx?.estado_pago ?? null,
+          estado_pago: estadoPago || null,
           notas_admin: latestTx?.notas_admin ?? null,
         };
       }) as Pub[];
@@ -189,6 +194,7 @@ function PubRow({ p, onDelete, onToggle }: { p: Pub; onDelete: () => void; onTog
   const { t } = useI18n();
   const nav = useNavigate();
   const img = useSignedUrl("productos", p.imagenes?.[0]);
+  const estadoPago = normalizePaymentState(p.estado_pago);
   const promoActiva =
     p.es_destacado && p.promocionado_hasta && new Date(p.promocionado_hasta) > new Date();
 
@@ -219,7 +225,7 @@ function PubRow({ p, onDelete, onToggle }: { p: Pub; onDelete: () => void; onTog
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            {!promoActiva && p.estado_pago !== "PENDIENTE" && (
+            {!promoActiva && estadoPago !== "PENDIENTE" && (
               <Button
                 size="sm"
                 className="bg-gradient-featured text-warning-foreground hover:opacity-90"
@@ -249,9 +255,9 @@ function PubRow({ p, onDelete, onToggle }: { p: Pub; onDelete: () => void; onTog
         </div>
 
         {/* 🔔 CUADRO DE AVISO DIRECTO DE PUBLICIDAD */}
-        {p.estado_pago && (
+        {estadoPago && (
           <>
-            {p.estado_pago === "PENDIENTE" && (
+            {estadoPago === "PENDIENTE" && (
               <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 text-xs text-amber-700 dark:text-amber-400 border-t border-amber-100 dark:border-amber-900/50">
                 <Clock className="h-3.5 w-3.5 shrink-0" />
                 <span>
@@ -259,7 +265,7 @@ function PubRow({ p, onDelete, onToggle }: { p: Pub; onDelete: () => void; onTog
                 </span>
               </div>
             )}
-            {p.estado_pago === "COMPLETADO" && promoActiva && (
+            {estadoPago === "COMPLETADO" && (
               <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-400 border-t border-emerald-100 dark:border-emerald-900/50">
                 <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                 <span>
@@ -268,7 +274,7 @@ function PubRow({ p, onDelete, onToggle }: { p: Pub; onDelete: () => void; onTog
                 </span>
               </div>
             )}
-            {p.estado_pago === "RECHAZADO" && (
+            {estadoPago === "RECHAZADO" && (
               <div className="flex items-center gap-2 bg-rose-50 dark:bg-rose-950/30 px-3 py-2 text-xs text-rose-700 dark:text-rose-400 border-t border-rose-100 dark:border-rose-900/50">
                 <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                 <div className="flex-1">

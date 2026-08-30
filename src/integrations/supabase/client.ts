@@ -6,9 +6,15 @@ function createUnavailableSupabaseClient() {
   const unavailableMessage =
     "Supabase no está configurado. Define VITE_SUPABASE_URL y VITE_SUPABASE_PUBLISHABLE_KEY para habilitar el backend.";
 
+  const makeErrorResult = <T>(data: T | null = null) => ({ data, error: { message: unavailableMessage } });
+
   const createQueryBuilder = () => {
-    const promise = Promise.resolve({ data: [], error: { message: unavailableMessage } });
-    return Object.assign(promise, {
+    const base: Record<string, unknown> = {
+      data: null,
+      error: { message: unavailableMessage },
+    };
+
+    const builder = Object.assign(Promise.resolve(base), {
       select() {
         return this;
       },
@@ -18,10 +24,22 @@ function createUnavailableSupabaseClient() {
       eq() {
         return this;
       },
-      ilike() {
+      or() {
+        return this;
+      },
+      ne() {
+        return this;
+      },
+      neq() {
+        return this;
+      },
+      gt() {
         return this;
       },
       gte() {
+        return this;
+      },
+      lt() {
         return this;
       },
       lte() {
@@ -30,10 +48,36 @@ function createUnavailableSupabaseClient() {
       in() {
         return this;
       },
+      ilike() {
+        return this;
+      },
+      range() {
+        return this;
+      },
       limit() {
         return this;
       },
+      single() {
+        return Promise.resolve({ data: null, error: { message: unavailableMessage } });
+      },
+      maybeSingle() {
+        return Promise.resolve({ data: null, error: { message: unavailableMessage } });
+      },
+      insert() {
+        return Promise.resolve({ data: null, error: { message: unavailableMessage } });
+      },
+      update() {
+        return Promise.resolve({ data: null, error: { message: unavailableMessage } });
+      },
+      upsert() {
+        return Promise.resolve({ data: null, error: { message: unavailableMessage } });
+      },
+      delete() {
+        return Promise.resolve({ data: null, error: { message: unavailableMessage } });
+      },
     });
+
+    return builder;
   };
 
   if (typeof window !== "undefined") {
@@ -104,6 +148,12 @@ function createUnavailableSupabaseClient() {
         list() {
           return Promise.resolve({ data: [], error: { message: unavailableMessage } });
         },
+        download() {
+          return Promise.resolve({ data: null, error: { message: unavailableMessage } });
+        },
+        getPublicUrl() {
+          return { data: { publicUrl: "" }, error: { message: unavailableMessage } };
+        },
         createSignedUrl() {
           return Promise.resolve({ data: { signedUrl: "", path: "" }, error: { message: unavailableMessage } });
         },
@@ -147,21 +197,20 @@ function createUnavailableSupabaseClient() {
 }
 
 function createSupabaseClient() {
-  // Use import.meta.env for client-side (Vite build-time replacement)
-  // Fall back to process.env for SSR (server-side rendering)
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+  // Vercel exposes these as browser variables, so prefer them directly.
+  const SUPABASE_URL =
+    import.meta.env.VITE_SUPABASE_URL ?? "";
   const SUPABASE_PUBLISHABLE_KEY =
-    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-    import.meta.env.VITE_SUPABASE_ANON_KEY ||
-    process.env.SUPABASE_PUBLISHABLE_KEY ||
-    process.env.SUPABASE_ANON_KEY;
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
+    import.meta.env.VITE_SUPABASE_ANON_KEY ??
+    "";
 
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     const missing = [
-      ...(!SUPABASE_URL ? ["SUPABASE_URL"] : []),
-      ...(!SUPABASE_PUBLISHABLE_KEY ? ["SUPABASE_PUBLISHABLE_KEY"] : []),
+      ...(!SUPABASE_URL ? ["VITE_SUPABASE_URL"] : []),
+      ...(!SUPABASE_PUBLISHABLE_KEY ? ["VITE_SUPABASE_PUBLISHABLE_KEY or VITE_SUPABASE_ANON_KEY"] : []),
     ];
-    const message = `Missing Supabase environment variable(s): ${missing.join(", ")}. Set them in your deployment environment.`;
+    const message = `Missing Supabase browser variable(s): ${missing.join(", ")}. Add them in Vercel project settings.`;
     console.warn(`[Supabase] ${message}`);
     return createUnavailableSupabaseClient();
   }
