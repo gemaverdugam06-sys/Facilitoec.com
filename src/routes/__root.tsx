@@ -13,6 +13,7 @@ import { toUserMessage } from "@/lib/error-messages";
 import { AuthProvider } from "@/lib/auth";
 import { I18nProvider } from "@/lib/i18n";
 import { Toaster } from "@/components/ui/sonner";
+import { Footer } from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 
 const OG_IMAGE = import.meta.env.VITE_OG_IMAGE_URL ?? "https://your-domain.com/og-image.png";
@@ -113,7 +114,12 @@ function RootComponent() {
               Módulo de backend temporalmente no disponible — algunas funciones pueden no funcionar. Modo solo lectura activado.
             </div>
           )}
-          <Outlet />
+          <div className="min-h-screen flex flex-col">
+            <div className="flex-1">
+              <Outlet />
+            </div>
+            <Footer />
+          </div>
           <Toaster richColors position="top-center" />
         </AuthProvider>
       </I18nProvider>
