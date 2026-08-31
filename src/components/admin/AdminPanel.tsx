@@ -58,6 +58,16 @@ interface ReportedReview {
   created_at: string;
 }
 
+interface UserProfile {
+  id: string;
+  nombre_completo: string | null;
+  ciudad: string | null;
+  avatar_url: string | null;
+  is_blocked: boolean;
+  motivo_bloqueo: string | null;
+  created_at: string;
+}
+
 const normalizePaymentState = (value: string | null | undefined) => {
   const raw = String(value ?? "").trim().toUpperCase();
   return raw.replace(/[-_\s]+/g, " ").replace(/\s+/g, " ").trim();
@@ -94,6 +104,7 @@ export function AdminPanel() {
   const [productosPendientes, setProductosPendientes] = useState<ProductoPendiente[]>([]);
   const [reportes, setReportes] = useState<Reporte[]>([]);
   const [reseniasReportadas, setReseniasReportadas] = useState<ReportedReview[]>([]);
+  const [usuarios, setUsuarios] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState<string | null>(null);
 
@@ -103,6 +114,7 @@ export function AdminPanel() {
       loadProductosPendientes();
       loadReportes();
       loadReseniasReportadas();
+      loadUsuarios();
     }
   }, [user?.id]);
 
@@ -180,6 +192,34 @@ export function AdminPanel() {
       setReseniasReportadas((data as unknown as ReportedReview[]) ?? []);
     } catch (err) {
       console.error("Error al cargar reseñas reportadas:", err);
+    }
+  };
+
+  const loadUsuarios = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(200);
+
+      if (error) throw error;
+
+      const rows = ((data as Array<Record<string, unknown>>) ?? []).map((userRow) => ({
+        id: String(userRow.id ?? ""),
+        nombre_completo: typeof userRow.nombre_completo === "string" ? userRow.nombre_completo : null,
+        ciudad: typeof userRow.ciudad === "string" ? userRow.ciudad : null,
+        avatar_url: typeof userRow.avatar_url === "string" ? userRow.avatar_url : null,
+        is_blocked: Boolean(userRow.is_blocked),
+        motivo_bloqueo:
+          typeof userRow.motivo_bloqueo === "string" ? userRow.motivo_bloqueo : null,
+        created_at:
+          typeof userRow.created_at === "string" ? userRow.created_at : new Date().toISOString(),
+      }));
+
+      setUsuarios(rows as UserProfile[]);
+    } catch (err) {
+      console.error("Error al cargar usuarios:", err);
     }
   };
 
@@ -428,6 +468,48 @@ export function AdminPanel() {
     }
   };
 
+  const onToggleUsuarioBloqueado = async (usuarioId: string, nombre: string, estadoActual: boolean) => {
+    const accion = estadoActual ? "desbloquear" : "bloquear";
+    const mensaje = `¿Deseas ${accion} al usuario ${nombre || "seleccionado"}?`;
+    const ok = window.confirm(mensaje);
+    if (!ok) return;
+
+    const motivo = prompt(
+      estadoActual ? "Motivo del desbloqueo (opcional):" : "Motivo del bloqueo:",
+      estadoActual ? "" : "Incumplimiento de políticas",
+    );
+
+    if (!estadoActual && (!motivo || motivo.trim() === "")) {
+      toast.error("Debes indicar un motivo para bloquear al usuario");
+      return;
+    }
+
+    setWorking(usuarioId);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          is_blocked: !estadoActual,
+          motivo_bloqueo: estadoActual ? null : motivo?.trim() || "Incumplimiento de políticas",
+        })
+        .eq("id", usuarioId);
+
+      if (error) throw error;
+      toast.success(estadoActual ? "Usuario desbloqueado" : "Usuario bloqueado");
+      await loadUsuarios();
+    } catch (err) {
+      console.error("Error al bloquear/desbloquear usuario:", err);
+      const message = err instanceof Error ? err.message : "";
+      if (message.includes("column") && message.includes("does not exist")) {
+        toast.error("La base de datos no tiene aún los campos de bloqueo. Ejecuta la migración de usuarios bloqueados.");
+      } else {
+        toast.error("No se pudo actualizar el estado del usuario");
+      }
+    } finally {
+      setWorking(null);
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
@@ -461,7 +543,7 @@ export function AdminPanel() {
           </div>
         ) : (
           <Tabs defaultValue="transacciones" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="transacciones">
                 Transacciones ({pendientes.length})
               </TabsTrigger>
@@ -473,6 +555,9 @@ export function AdminPanel() {
               </TabsTrigger>
               <TabsTrigger value="resenias">
                 Reseñas ({reseniasReportadas.length})
+              </TabsTrigger>
+              <TabsTrigger value="usuarios">
+                Usuarios ({usuarios.filter((u) => u.is_blocked).length})
               </TabsTrigger>
             </TabsList>
 
@@ -765,6 +850,52 @@ export function AdminPanel() {
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
                               <>Eliminar</>
+                            )}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            {/* USUARIOS TAB */}
+            <TabsContent value="usuarios" className="space-y-4">
+              {usuarios.length === 0 ? (
+                <p className="rounded-lg border border-dashed bg-muted/30 p-6 text-center text-sm text-muted-foreground">
+                  Sin usuarios registrados
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {usuarios.map((u) => (
+                    <Card key={u.id}>
+                      <CardContent className="space-y-2 p-4">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant={u.is_blocked ? "destructive" : "outline"}>
+                            {u.is_blocked ? "Bloqueado" : "Activo"}
+                          </Badge>
+                          <span className="font-bold">{u.nombre_completo || "Usuario sin nombre"}</span>
+                          <span className="text-xs text-muted-foreground">{u.ciudad || "Sin ciudad"}</span>
+                        </div>
+                        {u.motivo_bloqueo && (
+                          <p className="text-sm text-muted-foreground">
+                            Motivo: {u.motivo_bloqueo}
+                          </p>
+                        )}
+                        <div className="flex gap-2 pt-2">
+                          <Button
+                            size="sm"
+                            variant={u.is_blocked ? "secondary" : "destructive"}
+                            disabled={working === u.id}
+                            onClick={() => onToggleUsuarioBloqueado(u.id, u.nombre_completo || "Usuario", u.is_blocked)}
+                          >
+                            {working === u.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : u.is_blocked ? (
+                              "Desbloquear"
+                            ) : (
+                              "Bloquear"
                             )}
                           </Button>
                         </div>

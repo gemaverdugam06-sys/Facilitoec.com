@@ -60,9 +60,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     supabase.auth
       .getSession()
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         if (!active) return;
-        setSession(data.session ?? null);
+
+        const currentSession = data.session ?? null;
+        const userId = currentSession?.user?.id;
+
+        if (userId) {
+          try {
+            const { data: profileData, error: profileError } = await supabase
+              .from("profiles")
+              .select("*")
+              .eq("id", userId)
+              .maybeSingle();
+
+            if (!active) return;
+
+            const isBlocked = Boolean((profileData as { is_blocked?: boolean } | null)?.is_blocked);
+            if (!profileError && isBlocked) {
+              await supabase.auth.signOut();
+              setSession(null);
+              setIsAdmin(false);
+              finish();
+              return;
+            }
+          } catch {
+            // Si la columna no existe aún, la UI sigue funcionando sin bloquear el usuario.
+          }
+        }
+
+        setSession(currentSession);
         finish();
       })
       .catch(() => {
