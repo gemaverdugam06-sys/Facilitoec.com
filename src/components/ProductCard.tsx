@@ -13,12 +13,14 @@ export interface ProductCardData {
   ciudad: string;
   imagenes: string[];
   es_destacado: boolean;
+  promocionado_hasta?: string | null;
 }
 
 export function ProductCard({ p }: { p: ProductCardData }) {
   const { t } = useI18n();
   const img = useSignedUrl("productos", p.imagenes?.[0]);
   const MotionLink = motion(Link as any);
+  const destacadoActivo = !!p.es_destacado && (!p.promocionado_hasta || new Date(p.promocionado_hasta) > new Date());
 
   return (
     <MotionLink
@@ -30,7 +32,7 @@ export function ProductCard({ p }: { p: ProductCardData }) {
       whileHover={{ translateY: -4, scale: 1.01 }}
       transition={{ duration: 0.45, ease: "easeOut" }}
       className={`group relative flex flex-col overflow-hidden card-rounded border bg-card shadow-card transition-all will-change-transform ${
-        p.es_destacado ? "shadow-featured ring-1 ring-warning/30" : ""
+        destacadoActivo ? "shadow-featured ring-1 ring-warning/30" : ""
       }`}
     >
       <div className="relative aspect-square overflow-hidden bg-muted glass-border">
@@ -49,7 +51,7 @@ export function ProductCard({ p }: { p: ProductCardData }) {
             <ImageOff className="h-10 w-10" />
           </div>
         )}
-        {p.es_destacado && (
+        {destacadoActivo && (
           <Badge className="absolute left-2 top-2 bg-gradient-featured text-warning-foreground border-0 gap-1 shadow-md">
             <Sparkles className="h-3 w-3" /> {t("featured")}
           </Badge>

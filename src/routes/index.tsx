@@ -96,7 +96,7 @@ function Home() {
     const run = async () => {
       let query = supabase
         .from("productos")
-        .select("id, titulo, precio, moneda, ciudad, imagenes, es_destacado")
+        .select("id, titulo, precio, moneda, ciudad, imagenes, es_destacado, promocionado_hasta")
         .eq("activo", true)
         .order("es_destacado", { ascending: false })
         .order("created_at", { ascending: false })
@@ -113,7 +113,12 @@ function Home() {
       const max = parseFloat(maxP);
       if (!isNaN(max)) query = query.lte("precio", max);
       const { data } = await query;
-      setProductos((data as ProductCardData[]) ?? []);
+      const normalized = ((data as ProductCardData[]) ?? []).map((p) => ({
+        ...p,
+        es_destacado:
+          Boolean(p.es_destacado) && (!p.promocionado_hasta || new Date(p.promocionado_hasta) > new Date()),
+      }));
+      setProductos(normalized);
       setLoading(false);
     };
     const tm = setTimeout(run, 250);

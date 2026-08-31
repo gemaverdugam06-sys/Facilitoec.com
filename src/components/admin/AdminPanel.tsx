@@ -392,6 +392,42 @@ export function AdminPanel() {
     }
   };
 
+  const onEliminarProducto = async (productoId: string, titulo: string) => {
+    const ok = window.confirm(`¿Deseas eliminar permanentemente la publicación "${titulo}"?`);
+    if (!ok) return;
+
+    setWorking(productoId);
+    try {
+      const { error } = await supabase.from("productos").delete().eq("id", productoId);
+      if (error) throw error;
+      toast.success("Producto eliminado");
+      await loadProductosPendientes();
+    } catch (err) {
+      console.error("Error al eliminar producto:", err);
+      toast.error("No se pudo eliminar el producto");
+    } finally {
+      setWorking(null);
+    }
+  };
+
+  const onEliminarResena = async (resenaId: string) => {
+    const ok = window.confirm("¿Deseas eliminar esta reseña?");
+    if (!ok) return;
+
+    setWorking(resenaId);
+    try {
+      const { error } = await supabase.from("reseñas_vendedores").delete().eq("id", resenaId);
+      if (error) throw error;
+      toast.success("Reseña eliminada");
+      await loadReseniasReportadas();
+    } catch (err) {
+      console.error("Error al eliminar reseña:", err);
+      toast.error("No se pudo eliminar la reseña");
+    } finally {
+      setWorking(null);
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
@@ -585,6 +621,15 @@ export function AdminPanel() {
                           >
                             <ShieldX className="mr-1 h-4 w-4" /> Rechazar
                           </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-destructive hover:text-destructive"
+                            disabled={working === p.id}
+                            onClick={() => onEliminarProducto(p.id, p.titulo)}
+                          >
+                            <Trash2 className="mr-1 h-4 w-4" /> Eliminar
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -707,6 +752,19 @@ export function AdminPanel() {
                               <Loader2 className="h-4 w-4 animate-spin" />
                             ) : (
                               <>Ocultar reseña</>
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-destructive hover:text-destructive"
+                            disabled={working === r.id}
+                            onClick={() => onEliminarResena(r.id)}
+                          >
+                            {working === r.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>Eliminar</>
                             )}
                           </Button>
                         </div>
