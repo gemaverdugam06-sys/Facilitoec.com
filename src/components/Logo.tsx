@@ -10,15 +10,8 @@ export function Logo({ className = "h-9 w-9" }: { className?: string }) {
       </defs>
 
       <rect x="4" y="4" width="56" height="56" rx="18" fill="#071a2e" />
-      <path
-        d="M34 8 18 34h11l-4.8 22L45 28H34l5-20Z"
-        fill="url(#facilitologo-gradient)"
-      />
-      <path
-        d="M29 10.5 21 26h8.5L26 39l12.5-17H31l3.5-11.5Z"
-        fill="#f8fafc"
-        opacity="0.18"
-      />
+      <path d="M34 8 18 34h11l-4.8 22L45 28H34l5-20Z" fill="url(#facilitologo-gradient)" />
+      <path d="M29 10.5 21 26h8.5L26 39l12.5-17H31l3.5-11.5Z" fill="#f8fafc" opacity="0.18" />
     </svg>
   );
 }

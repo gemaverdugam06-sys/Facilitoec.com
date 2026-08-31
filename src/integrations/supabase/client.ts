@@ -6,7 +6,10 @@ function createUnavailableSupabaseClient() {
   const unavailableMessage =
     "Supabase no está configurado. Define VITE_SUPABASE_URL y VITE_SUPABASE_PUBLISHABLE_KEY para habilitar el backend.";
 
-  const makeErrorResult = <T>(data: T | null = null) => ({ data, error: { message: unavailableMessage } });
+  const makeErrorResult = <T>(data: T | null = null) => ({
+    data,
+    error: { message: unavailableMessage },
+  });
 
   const createQueryBuilder = () => {
     const base: Record<string, unknown> = {
@@ -114,19 +117,31 @@ function createUnavailableSupabaseClient() {
       return Promise.resolve({ data: { provider: null }, error: { message: unavailableMessage } });
     },
     signInWithPassword() {
-      return Promise.resolve({ data: { session: null, user: null }, error: { message: unavailableMessage } });
+      return Promise.resolve({
+        data: { session: null, user: null },
+        error: { message: unavailableMessage },
+      });
     },
     signInWithOtp() {
-      return Promise.resolve({ data: { session: null, user: null }, error: { message: unavailableMessage } });
+      return Promise.resolve({
+        data: { session: null, user: null },
+        error: { message: unavailableMessage },
+      });
     },
     signUp() {
-      return Promise.resolve({ data: { session: null, user: null }, error: { message: unavailableMessage } });
+      return Promise.resolve({
+        data: { session: null, user: null },
+        error: { message: unavailableMessage },
+      });
     },
     resetPasswordForEmail() {
       return Promise.resolve({ data: null, error: { message: unavailableMessage } });
     },
     verifyOtp() {
-      return Promise.resolve({ data: { session: null, user: null }, error: { message: unavailableMessage } });
+      return Promise.resolve({
+        data: { session: null, user: null },
+        error: { message: unavailableMessage },
+      });
     },
     updateUser() {
       return Promise.resolve({ data: { user: null }, error: null });
@@ -155,7 +170,10 @@ function createUnavailableSupabaseClient() {
           return { data: { publicUrl: "" }, error: { message: unavailableMessage } };
         },
         createSignedUrl() {
-          return Promise.resolve({ data: { signedUrl: "", path: "" }, error: { message: unavailableMessage } });
+          return Promise.resolve({
+            data: { signedUrl: "", path: "" },
+            error: { message: unavailableMessage },
+          });
         },
         createSignedUrls(paths: string[]) {
           return Promise.resolve({
@@ -198,17 +216,16 @@ function createUnavailableSupabaseClient() {
 
 function createSupabaseClient() {
   // Vercel exposes these as browser variables, so prefer them directly.
-  const SUPABASE_URL =
-    import.meta.env.VITE_SUPABASE_URL ?? "";
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "";
   const SUPABASE_PUBLISHABLE_KEY =
-    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
-    import.meta.env.VITE_SUPABASE_ANON_KEY ??
-    "";
+    import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? import.meta.env.VITE_SUPABASE_ANON_KEY ?? "";
 
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     const missing = [
       ...(!SUPABASE_URL ? ["VITE_SUPABASE_URL"] : []),
-      ...(!SUPABASE_PUBLISHABLE_KEY ? ["VITE_SUPABASE_PUBLISHABLE_KEY or VITE_SUPABASE_ANON_KEY"] : []),
+      ...(!SUPABASE_PUBLISHABLE_KEY
+        ? ["VITE_SUPABASE_PUBLISHABLE_KEY or VITE_SUPABASE_ANON_KEY"]
+        : []),
     ];
     const message = `Missing Supabase browser variable(s): ${missing.join(", ")}. Add them in Vercel project settings.`;
     console.warn(`[Supabase] ${message}`);

@@ -24,9 +24,14 @@ function NotFoundComponent() {
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold">Página no encontrada</h2>
-        <p className="mt-2 text-sm text-muted-foreground">La página que buscas no existe o fue movida.</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          La página que buscas no existe o fue movida.
+        </p>
         <div className="mt-6">
-          <Link to="/" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90">
+          <Link
+            to="/"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+          >
             Ir al inicio
           </Link>
         </div>
@@ -45,7 +50,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <p className="mt-2 text-sm text-muted-foreground">{userMessage}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
-            onClick={() => { router.invalidate(); reset(); }}
+            onClick={() => {
+              router.invalidate();
+              reset();
+            }}
             className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
           >
             Reintentar
@@ -79,13 +87,17 @@ function RootComponent() {
   useEffect(() => {
     try {
       const stored = localStorage.getItem("supabase_down");
-      const unavailable = Boolean((supabase as typeof supabase & { __unavailable?: boolean }).__unavailable);
+      const unavailable = Boolean(
+        (supabase as typeof supabase & { __unavailable?: boolean }).__unavailable,
+      );
       setSupabaseDown(!!stored || unavailable);
     } catch {
       setSupabaseDown(false);
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") router.navigate({ to: "/auth/nueva-contrasena" });
       if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
         router.invalidate();
@@ -111,7 +123,8 @@ function RootComponent() {
         <AuthProvider>
           {supabaseDown && (
             <div className="w-full bg-yellow-50 border-y border-yellow-200 text-yellow-800 text-center py-2 text-sm">
-              Módulo de backend temporalmente no disponible — algunas funciones pueden no funcionar. Modo solo lectura activado.
+              Módulo de backend temporalmente no disponible — algunas funciones pueden no funcionar.
+              Modo solo lectura activado.
             </div>
           )}
           <div className="min-h-screen flex flex-col">
@@ -129,10 +142,7 @@ function RootComponent() {
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { title: "WINFAST — Compra y vende fácil en Ecuador" },
-    ],
+    meta: [{ charSet: "utf-8" }, { title: "WINFAST — Compra y vende fácil en Ecuador" }],
     links: [
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
       { rel: "alternate icon", href: "/favicon.ico", type: "image/x-icon" },

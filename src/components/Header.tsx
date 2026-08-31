@@ -110,11 +110,11 @@ export function Header() {
               </DropdownMenu>
             </>
           ) : (
-              <motion.div whileHover={{ scale: 1.02 }} className="will-change-transform">
-                <Button asChild className="btn-cta hover:opacity-95">
-                  <Link to="/auth">{t("sign_in")}</Link>
-                </Button>
-              </motion.div>
+            <motion.div whileHover={{ scale: 1.02 }} className="will-change-transform">
+              <Button asChild className="btn-cta hover:opacity-95">
+                <Link to="/auth">{t("sign_in")}</Link>
+              </Button>
+            </motion.div>
           )}
         </div>
       </div>

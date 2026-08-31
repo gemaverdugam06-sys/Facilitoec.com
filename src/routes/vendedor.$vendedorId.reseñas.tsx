@@ -68,7 +68,7 @@ function ReseñasVendedor() {
             created_at,
             comprador_id,
             profiles:comprador_id (nombre_completo, avatar_url)
-          `
+          `,
           )
           .eq("vendedor_id", vendedorId)
           .eq("estado", "visible")
@@ -171,12 +171,16 @@ function ReseñasVendedor() {
                             : undefined
                         }
                       />
-                      <AvatarFallback>{reseña.profiles?.nombre_completo?.[0] ?? "?"}</AvatarFallback>
+                      <AvatarFallback>
+                        {reseña.profiles?.nombre_completo?.[0] ?? "?"}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <div className="flex items-center justify-between gap-4">
                         <div>
-                          <p className="font-semibold">{reseña.profiles?.nombre_completo ?? "Usuario"}</p>
+                          <p className="font-semibold">
+                            {reseña.profiles?.nombre_completo ?? "Usuario"}
+                          </p>
                           <div className="mt-1 flex items-center gap-2">
                             <div className="flex items-center gap-0.5">
                               {Array.from({ length: 5 }).map((_, i) => (

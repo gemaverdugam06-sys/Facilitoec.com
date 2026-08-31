@@ -25,7 +25,8 @@ import {
 import { toast } from "sonner";
 import { toUserMessage } from "@/lib/error-messages";
 
-const PAYPHONE_LINK = import.meta.env.VITE_PAYPHONE_LINK ?? "https://ppls.me/yV2qDHkhPNunrElO0Tut1g";
+const PAYPHONE_LINK =
+  import.meta.env.VITE_PAYPHONE_LINK ?? "https://ppls.me/yV2qDHkhPNunrElO0Tut1g";
 
 export const Route = createFileRoute("/_authenticated/promocionar/$productoId")({
   component: PromocionarPage,

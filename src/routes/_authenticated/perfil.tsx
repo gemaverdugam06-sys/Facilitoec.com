@@ -66,7 +66,7 @@ function PerfilPage() {
       setUploading(false);
       if (String(upErr.message).toLowerCase().includes("bucket not found")) {
         return toast.error(
-          "Falta crear el bucket 'avatars' en Supabase Storage. Ve a Storage > New bucket y créalo para subir la foto de perfil."
+          "Falta crear el bucket 'avatars' en Supabase Storage. Ve a Storage > New bucket y créalo para subir la foto de perfil.",
         );
       }
       return toast.error(toUserMessage(upErr, "No se pudo subir la foto."));

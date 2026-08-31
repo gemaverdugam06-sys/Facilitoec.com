@@ -74,15 +74,17 @@ Una vez que el deploy esté completo:
 
 **Posible causa**: Falta una variable de entorno en tiempo de build.
 
-**Solución**: 
+**Solución**:
+
 - Revisa los logs de build en Vercel
-- Asegúrate de que TODAS las variables VITE_* estén agregadas
+- Asegúrate de que TODAS las variables VITE\_\* estén agregadas
 
 ### Síntoma: "Deploy succeeded" pero página en blanco o 500 error
 
 **Posible causa**: Error en runtime (Supabase offline, variable de entorno faltante, etc).
 
 **Solución**:
+
 - Revisa los logs de runtime en Vercel → **Function Logs**
 - Busca mensajes como "SUPABASE_SERVICE_ROLE_KEY" missing
 
@@ -91,6 +93,7 @@ Una vez que el deploy esté completo:
 **Posible causa**: vercel.json no está sirviendo assets correctamente.
 
 **Solución**:
+
 - Verifica que `dist/client/assets/` exista localmente (ejecuta `npm run build`)
 - Reinicia el deploy
 

@@ -2,7 +2,13 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -68,7 +74,12 @@ export function ReportDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Flag className="h-5 w-5" />
-            Reportar {reportType === "producto" ? "publicación" : reportType === "usuario" ? "usuario" : "reseña"}
+            Reportar{" "}
+            {reportType === "producto"
+              ? "publicación"
+              : reportType === "usuario"
+                ? "usuario"
+                : "reseña"}
           </DialogTitle>
           <DialogDescription>
             Ayúdanos a mantener WINFAST seguro reportando contenido inapropiado.
@@ -106,14 +117,13 @@ export function ReportDialog({
               rows={4}
               className="resize-none"
             />
-            <p className="text-xs text-muted-foreground">
-              {descripcion.length}/500
-            </p>
+            <p className="text-xs text-muted-foreground">{descripcion.length}/500</p>
           </div>
 
           <div className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
             <p>
-              ⚠️ Los reportes falsos o de spam serán ignorados. Todos los reportes se revisan de forma anónima.
+              ⚠️ Los reportes falsos o de spam serán ignorados. Todos los reportes se revisan de
+              forma anónima.
             </p>
           </div>
 

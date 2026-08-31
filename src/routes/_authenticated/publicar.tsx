@@ -19,7 +19,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImagePlus, Loader2, X, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { toUserMessage } from "@/lib/error-messages";
-import { validateProductTitle, validateProductDescription, getProhibitedContentMessage, containsProhibitedKeywords } from "@/lib/content-security";
+import {
+  validateProductTitle,
+  validateProductDescription,
+  getProhibitedContentMessage,
+  containsProhibitedKeywords,
+} from "@/lib/content-security";
 import { z } from "zod";
 
 interface Categoria {

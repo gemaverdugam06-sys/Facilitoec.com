@@ -30,7 +30,8 @@ function RecuperarPage() {
     const redirectTo = `${window.location.origin}/auth/nueva-contrasena`;
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
     setLoading(false);
-    if (error) return toast.error(toUserMessage(error, "No se pudo enviar el enlace de recuperación."));
+    if (error)
+      return toast.error(toUserMessage(error, "No se pudo enviar el enlace de recuperación."));
     setSent(true);
     toast.success(t("reset_email_sent"));
   };

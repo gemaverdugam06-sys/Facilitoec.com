@@ -30,7 +30,7 @@ export async function getUserRole(userId: string): Promise<string | null> {
   }
 
   const roles = Array.isArray(data) ? data.map((row) => row?.role).filter(Boolean) : [];
-  return roles.includes("admin") ? "admin" : roles[0] ?? null;
+  return roles.includes("admin") ? "admin" : (roles[0] ?? null);
 }
 
 export async function checkIsAdmin(userId: string): Promise<boolean> {

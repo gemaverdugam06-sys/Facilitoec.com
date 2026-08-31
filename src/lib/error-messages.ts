@@ -7,10 +7,14 @@ const KNOWN_MESSAGES: Record<string, string> = {
   "Phone number already registered": "Este número ya está registrado.",
   "Invalid OTP": "Código incorrecto. Intenta de nuevo.",
   "SMS sending failed": "No se pudo enviar el SMS. Intenta más tarde.",
-  "email rate limit exceeded": "Se excedió el límite de intentos para este correo. Espera unos minutos e inténtalo de nuevo.",
-  "rate limit exceeded": "Se excedió el límite de intentos. Espera unos minutos e inténtalo de nuevo.",
-  "Bucket not found": "El almacenamiento de fotos no está configurado en Supabase. Crea el bucket 'avatars' en Storage para poder subir imágenes.",
-  "bucket not found": "El almacenamiento de fotos no está configurado en Supabase. Crea el bucket 'avatars' en Storage para poder subir imágenes.",
+  "email rate limit exceeded":
+    "Se excedió el límite de intentos para este correo. Espera unos minutos e inténtalo de nuevo.",
+  "rate limit exceeded":
+    "Se excedió el límite de intentos. Espera unos minutos e inténtalo de nuevo.",
+  "Bucket not found":
+    "El almacenamiento de fotos no está configurado en Supabase. Crea el bucket 'avatars' en Storage para poder subir imágenes.",
+  "bucket not found":
+    "El almacenamiento de fotos no está configurado en Supabase. Crea el bucket 'avatars' en Storage para poder subir imágenes.",
 };
 
 const TECHNICAL_PATTERN =

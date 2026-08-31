@@ -32,7 +32,8 @@ function PoliticasSeguridad() {
               Políticas de Seguridad y Contenido Prohibido
             </h1>
             <p className="mt-3 text-sm text-slate-300">
-              En WINFAST nos comprometemos a mantener una plataforma segura y legal para todos nuestros usuarios.
+              En WINFAST nos comprometemos a mantener una plataforma segura y legal para todos
+              nuestros usuarios.
             </p>
           </header>
 
@@ -43,9 +44,9 @@ function PoliticasSeguridad() {
                 Contenido Prohibido
               </h2>
               <p className="mb-4">
-                Las siguientes categorías de productos, servicios y contenido NO están permitidos en WINFAST.
-                Las publicaciones que incumplan estas políticas serán rechazadas automáticamente y podrán resultar
-                en la suspensión de tu cuenta.
+                Las siguientes categorías de productos, servicios y contenido NO están permitidos en
+                WINFAST. Las publicaciones que incumplan estas políticas serán rechazadas
+                automáticamente y podrán resultar en la suspensión de tu cuenta.
               </p>
               <div className="grid gap-4 md:grid-cols-2">
                 {prohibitedCategories.map((category) => (
@@ -68,7 +69,8 @@ function PoliticasSeguridad() {
             <section className="border-t border-slate-800 pt-8">
               <h2 className="mb-4 text-xl font-bold text-white">Validación de Contenido</h2>
               <p className="mb-4">
-                Implementamos un sistema de validación automática y manual para detectar y prevenir contenido prohibido:
+                Implementamos un sistema de validación automática y manual para detectar y prevenir
+                contenido prohibido:
               </p>
               <ul className="space-y-3 pl-4">
                 <li className="flex gap-3">
@@ -78,8 +80,8 @@ function PoliticasSeguridad() {
                   <div>
                     <p className="font-semibold">Validación Automática en Tiempo Real</p>
                     <p className="text-sm text-slate-400">
-                      Nuestro sistema analiza el título y descripción de tu publicación en busca de palabras clave
-                      prohibidas.
+                      Nuestro sistema analiza el título y descripción de tu publicación en busca de
+                      palabras clave prohibidas.
                     </p>
                   </div>
                 </li>
@@ -90,7 +92,8 @@ function PoliticasSeguridad() {
                   <div>
                     <p className="font-semibold">Revisión Manual por Moderadores</p>
                     <p className="text-sm text-slate-400">
-                      Cada publicación se revisa manualmente para asegurar que cumple con nuestras políticas.
+                      Cada publicación se revisa manualmente para asegurar que cumple con nuestras
+                      políticas.
                     </p>
                   </div>
                 </li>
@@ -101,7 +104,8 @@ function PoliticasSeguridad() {
                   <div>
                     <p className="font-semibold">Sistema de Reportes de Usuarios</p>
                     <p className="text-sm text-slate-400">
-                      Los usuarios pueden reportar contenido sospechoso o inapropiado para revisión inmediata.
+                      Los usuarios pueden reportar contenido sospechoso o inapropiado para revisión
+                      inmediata.
                     </p>
                   </div>
                 </li>
@@ -112,7 +116,8 @@ function PoliticasSeguridad() {
                   <div>
                     <p className="font-semibold">Validación de Archivos</p>
                     <p className="text-sm text-slate-400">
-                      Las imágenes se analizan para detectar malware, y se bloquean extensiones de archivo peligrosas.
+                      Las imágenes se analizan para detectar malware, y se bloquean extensiones de
+                      archivo peligrosas.
                     </p>
                   </div>
                 </li>
@@ -120,27 +125,29 @@ function PoliticasSeguridad() {
             </section>
 
             <section className="border-t border-slate-800 pt-8">
-              <h2 className="mb-4 text-xl font-bold text-white">¿Qué Sucede si Publico Contenido Prohibido?</h2>
+              <h2 className="mb-4 text-xl font-bold text-white">
+                ¿Qué Sucede si Publico Contenido Prohibido?
+              </h2>
               <div className="space-y-4 rounded-lg border border-orange-500/20 bg-orange-500/5 p-5">
                 <div>
                   <p className="mb-2 font-semibold text-orange-300">Primera Vez:</p>
                   <p className="text-sm">
-                    Tu publicación será rechazada y recibirás una notificación explicando la razón. Podrás intentar
-                    nuevamente con contenido que cumpla las políticas.
+                    Tu publicación será rechazada y recibirás una notificación explicando la razón.
+                    Podrás intentar nuevamente con contenido que cumpla las políticas.
                   </p>
                 </div>
                 <div>
                   <p className="mb-2 font-semibold text-orange-300">Múltiples Violaciones:</p>
                   <p className="text-sm">
-                    Si continúas publicando contenido prohibido, tu cuenta será suspendida temporalmente o
-                    permanentemente.
+                    Si continúas publicando contenido prohibido, tu cuenta será suspendida
+                    temporalmente o permanentemente.
                   </p>
                 </div>
                 <div>
                   <p className="mb-2 font-semibold text-orange-300">Reporte a Autoridades:</p>
                   <p className="text-sm">
-                    En casos de actividades claramente ilegales, WINFAST se reserva el derecho de reportar el asunto
-                    a las autoridades competentes.
+                    En casos de actividades claramente ilegales, WINFAST se reserva el derecho de
+                    reportar el asunto a las autoridades competentes.
                   </p>
                 </div>
               </div>
@@ -149,7 +156,8 @@ function PoliticasSeguridad() {
             <section className="border-t border-slate-800 pt-8">
               <h2 className="mb-4 text-xl font-bold text-white">Cumplimiento Legal</h2>
               <p>
-                WINFAST cumple con todas las leyes y regulaciones de la República del Ecuador, incluyendo:
+                WINFAST cumple con todas las leyes y regulaciones de la República del Ecuador,
+                incluyendo:
               </p>
               <ul className="mt-4 list-inside list-disc space-y-2 text-sm text-slate-300">
                 <li>Código Orgánico Integral Penal (COIP)</li>
@@ -162,7 +170,8 @@ function PoliticasSeguridad() {
             <section className="border-t border-slate-800 pt-8">
               <h2 className="mb-4 text-xl font-bold text-white">¿Tienes Dudas?</h2>
               <p>
-                Si tienes preguntas sobre si tu contenido cumple con nuestras políticas, te recomendamos:
+                Si tienes preguntas sobre si tu contenido cumple con nuestras políticas, te
+                recomendamos:
               </p>
               <ul className="mt-4 space-y-2 text-sm text-slate-300">
                 <li>✓ Leer esta política completamente antes de publicar</li>
@@ -182,31 +191,37 @@ const prohibitedCategories = [
   {
     id: "drogas",
     title: "🚫 Drogas y Sustancias Ilegales",
-    description: "Se prohíbe completamente la venta de drogas, sustancias controladas, y cualquier artículo relacionado con su consumo.",
+    description:
+      "Se prohíbe completamente la venta de drogas, sustancias controladas, y cualquier artículo relacionado con su consumo.",
     examples: "Marihuana, cocaína, heroína, metanfetamina, éxtasis, LSD, fentanilo",
   },
   {
     id: "armas",
     title: "🔫 Armas, Municiones y Explosivos",
-    description: "No se permite la comercialización de armas de fuego, armas blancas prohibidas, municiones o explosivos de ningún tipo.",
+    description:
+      "No se permite la comercialización de armas de fuego, armas blancas prohibidas, municiones o explosivos de ningún tipo.",
     examples: "Pistolas, rifles, explosivos, granadas, detonadores",
   },
   {
     id: "robado",
     title: "🚗 Productos Robados o Ilícitos",
-    description: "Está prohibido vender productos que sean robados o que provengan de actividades ilícitas.",
+    description:
+      "Está prohibido vender productos que sean robados o que provengan de actividades ilícitas.",
     examples: "Electrónicos robados, vehículos sin documentación, bienes de procedencia dudosa",
   },
   {
     id: "falsificado",
     title: "📄 Documentos Falsificados",
-    description: "No se permite la oferta de documentación falsificada, modificada o fraudulenta de ningún tipo.",
-    examples: "Cédulas falsas, pasaportes falsificados, títulos académicos falsos, licencias falsificadas",
+    description:
+      "No se permite la oferta de documentación falsificada, modificada o fraudulenta de ningún tipo.",
+    examples:
+      "Cédulas falsas, pasaportes falsificados, títulos académicos falsos, licencias falsificadas",
   },
   {
     id: "fraude",
     title: "💰 Fraudes y Estafas",
-    description: "Se prohíben esquemas de fraude, estafas, dinero falsificado y actividades fraudulentas.",
+    description:
+      "Se prohíben esquemas de fraude, estafas, dinero falsificado y actividades fraudulentas.",
     examples: "Esquemas Ponzi, dinero falso, servicios que no se prestarán",
   },
   {
@@ -218,13 +233,15 @@ const prohibitedCategories = [
   {
     id: "malware",
     title: "🦠 Malware y Archivos Peligrosos",
-    description: "Se prohíbe distribuir archivos maliciosos, código dañino, virus o cualquier software malévolo.",
+    description:
+      "Se prohíbe distribuir archivos maliciosos, código dañino, virus o cualquier software malévolo.",
     examples: "Virus, ransomware, spyware, troyanos, keyloggers",
   },
   {
     id: "menores",
     title: "👶 Explotación de Menores",
-    description: "Cualquier contenido que explote, abuse o sexualice a menores de edad está completamente prohibido.",
+    description:
+      "Cualquier contenido que explote, abuse o sexualice a menores de edad está completamente prohibido.",
     examples: "Material sexual infantil, explotación de menores",
   },
 ];

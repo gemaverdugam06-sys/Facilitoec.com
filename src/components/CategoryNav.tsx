@@ -17,7 +17,9 @@ export function CategoryNav({ categorias, activa }: { categorias: Categoria[]; a
         <MotionLink
           to="/"
           className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition will-change-transform ${
-            !activa ? "bg-gradient-primary text-primary-foreground shadow-sm" : "bg-card hover:bg-accent"
+            !activa
+              ? "bg-gradient-primary text-primary-foreground shadow-sm"
+              : "bg-card hover:bg-accent"
           }`}
           whileHover={{ scale: 1.03 }}
         >
@@ -32,7 +34,9 @@ export function CategoryNav({ categorias, activa }: { categorias: Categoria[]; a
               to="/categoria/$id"
               params={{ id: c.id }}
               className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition will-change-transform ${
-                active ? "bg-gradient-primary text-primary-foreground shadow-sm" : "bg-card hover:bg-accent"
+                active
+                  ? "bg-gradient-primary text-primary-foreground shadow-sm"
+                  : "bg-card hover:bg-accent"
               }`}
               whileHover={{ scale: 1.03 }}
             >

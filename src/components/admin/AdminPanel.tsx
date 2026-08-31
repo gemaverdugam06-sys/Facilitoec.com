@@ -5,7 +5,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, ShieldCheck, ShieldX, Eye, Lock, Trash2, AlertCircle, Flag, Star } from "lucide-react";
+import {
+  Loader2,
+  ShieldCheck,
+  ShieldX,
+  Eye,
+  Lock,
+  Trash2,
+  AlertCircle,
+  Flag,
+  Star,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { promoEndDate } from "@/lib/promo-plans";
@@ -69,8 +79,13 @@ interface UserProfile {
 }
 
 const normalizePaymentState = (value: string | null | undefined) => {
-  const raw = String(value ?? "").trim().toUpperCase();
-  return raw.replace(/[-_\s]+/g, " ").replace(/\s+/g, " ").trim();
+  const raw = String(value ?? "")
+    .trim()
+    .toUpperCase();
+  return raw
+    .replace(/[-_\s]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 };
 
 const isPendingState = (value?: string | null) => {
@@ -116,7 +131,7 @@ export function AdminPanel() {
       loadReseniasReportadas();
       loadUsuarios();
     }
-  }, [user?.id]);
+  }, [user]);
 
   const loadTransactions = async () => {
     setLoading(true);
@@ -207,12 +222,12 @@ export function AdminPanel() {
 
       const rows = ((data as Array<Record<string, unknown>>) ?? []).map((userRow) => ({
         id: String(userRow.id ?? ""),
-        nombre_completo: typeof userRow.nombre_completo === "string" ? userRow.nombre_completo : null,
+        nombre_completo:
+          typeof userRow.nombre_completo === "string" ? userRow.nombre_completo : null,
         ciudad: typeof userRow.ciudad === "string" ? userRow.ciudad : null,
         avatar_url: typeof userRow.avatar_url === "string" ? userRow.avatar_url : null,
         is_blocked: Boolean(userRow.is_blocked),
-        motivo_bloqueo:
-          typeof userRow.motivo_bloqueo === "string" ? userRow.motivo_bloqueo : null,
+        motivo_bloqueo: typeof userRow.motivo_bloqueo === "string" ? userRow.motivo_bloqueo : null,
         created_at:
           typeof userRow.created_at === "string" ? userRow.created_at : new Date().toISOString(),
       }));
@@ -304,7 +319,9 @@ export function AdminPanel() {
       console.error("Error al aprobar transacción:", error);
       setTxs((prev) =>
         prev.map((item) =>
-          item.id === tx.id ? { ...item, estado_pago: tx.estado_pago, notas_admin: tx.notas_admin } : item,
+          item.id === tx.id
+            ? { ...item, estado_pago: tx.estado_pago, notas_admin: tx.notas_admin }
+            : item,
         ),
       );
       toast.error("Error al aprobar transacción");
@@ -341,7 +358,9 @@ export function AdminPanel() {
       console.error("Error al rechazar transacción:", error);
       setTxs((prev) =>
         prev.map((item) =>
-          item.id === id ? { ...item, estado_pago: "PENDIENTE", notas_admin: mensajeRechazo } : item,
+          item.id === id
+            ? { ...item, estado_pago: "PENDIENTE", notas_admin: mensajeRechazo }
+            : item,
         ),
       );
       toast.error("Error al rechazar transacción");
@@ -468,7 +487,11 @@ export function AdminPanel() {
     }
   };
 
-  const onToggleUsuarioBloqueado = async (usuarioId: string, nombre: string, estadoActual: boolean) => {
+  const onToggleUsuarioBloqueado = async (
+    usuarioId: string,
+    nombre: string,
+    estadoActual: boolean,
+  ) => {
     const accion = estadoActual ? "desbloquear" : "bloquear";
     const mensaje = `¿Deseas ${accion} al usuario ${nombre || "seleccionado"}?`;
     const ok = window.confirm(mensaje);
@@ -501,7 +524,9 @@ export function AdminPanel() {
       console.error("Error al bloquear/desbloquear usuario:", err);
       const message = err instanceof Error ? err.message : "";
       if (message.includes("column") && message.includes("does not exist")) {
-        toast.error("La base de datos no tiene aún los campos de bloqueo. Ejecuta la migración de usuarios bloqueados.");
+        toast.error(
+          "La base de datos no tiene aún los campos de bloqueo. Ejecuta la migración de usuarios bloqueados.",
+        );
       } else {
         toast.error("No se pudo actualizar el estado del usuario");
       }
@@ -522,7 +547,9 @@ export function AdminPanel() {
     );
   }
 
-  const pendientes = txs.filter((t) => isPendingState(t.estado_pago) && !isHistoryState(t.estado_pago));
+  const pendientes = txs.filter(
+    (t) => isPendingState(t.estado_pago) && !isHistoryState(t.estado_pago),
+  );
   const otras = txs.filter((t) => !isPendingState(t.estado_pago) || isHistoryState(t.estado_pago));
 
   const reportesPendientes = reportes.filter((r) => r.estado === "pendiente");
@@ -544,18 +571,10 @@ export function AdminPanel() {
         ) : (
           <Tabs defaultValue="transacciones" className="w-full">
             <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="transacciones">
-                Transacciones ({pendientes.length})
-              </TabsTrigger>
-              <TabsTrigger value="moderacion">
-                Productos ({productosPendientes.length})
-              </TabsTrigger>
-              <TabsTrigger value="reportes">
-                Reportes ({reportesPendientes.length})
-              </TabsTrigger>
-              <TabsTrigger value="resenias">
-                Reseñas ({reseniasReportadas.length})
-              </TabsTrigger>
+              <TabsTrigger value="transacciones">Transacciones ({pendientes.length})</TabsTrigger>
+              <TabsTrigger value="moderacion">Productos ({productosPendientes.length})</TabsTrigger>
+              <TabsTrigger value="reportes">Reportes ({reportesPendientes.length})</TabsTrigger>
+              <TabsTrigger value="resenias">Reseñas ({reseniasReportadas.length})</TabsTrigger>
               <TabsTrigger value="usuarios">
                 Usuarios ({usuarios.filter((u) => u.is_blocked).length})
               </TabsTrigger>
@@ -679,7 +698,9 @@ export function AdminPanel() {
                             {new Date(p.created_at).toLocaleString()}
                           </span>
                         </div>
-                        <p className="text-sm text-muted-foreground">{p.descripcion?.substring(0, 100)}...</p>
+                        <p className="text-sm text-muted-foreground">
+                          {p.descripcion?.substring(0, 100)}...
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           Por: {p.profiles?.nombre_completo ?? "Usuario"}
                         </p>
@@ -750,7 +771,8 @@ export function AdminPanel() {
                           </span>
                         </div>
                         <p className="text-sm">
-                          <span className="font-semibold">Razón:</span> {reportReasons[r.razon as keyof typeof reportReasons] || r.razon}
+                          <span className="font-semibold">Razón:</span>{" "}
+                          {reportReasons[r.razon as keyof typeof reportReasons] || r.razon}
                         </p>
                         {r.descripcion && (
                           <p className="text-sm text-muted-foreground">
@@ -823,9 +845,7 @@ export function AdminPanel() {
                             {new Date(r.created_at).toLocaleString()}
                           </span>
                         </div>
-                        {r.comentario && (
-                          <p className="text-sm italic">{r.comentario}</p>
-                        )}
+                        {r.comentario && <p className="text-sm italic">{r.comentario}</p>}
                         <div className="flex gap-2 pt-2">
                           <Button
                             size="sm"
@@ -875,8 +895,12 @@ export function AdminPanel() {
                           <Badge variant={u.is_blocked ? "destructive" : "outline"}>
                             {u.is_blocked ? "Bloqueado" : "Activo"}
                           </Badge>
-                          <span className="font-bold">{u.nombre_completo || "Usuario sin nombre"}</span>
-                          <span className="text-xs text-muted-foreground">{u.ciudad || "Sin ciudad"}</span>
+                          <span className="font-bold">
+                            {u.nombre_completo || "Usuario sin nombre"}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {u.ciudad || "Sin ciudad"}
+                          </span>
                         </div>
                         {u.motivo_bloqueo && (
                           <p className="text-sm text-muted-foreground">
@@ -888,7 +912,13 @@ export function AdminPanel() {
                             size="sm"
                             variant={u.is_blocked ? "secondary" : "destructive"}
                             disabled={working === u.id}
-                            onClick={() => onToggleUsuarioBloqueado(u.id, u.nombre_completo || "Usuario", u.is_blocked)}
+                            onClick={() =>
+                              onToggleUsuarioBloqueado(
+                                u.id,
+                                u.nombre_completo || "Usuario",
+                                u.is_blocked,
+                              )
+                            }
                           >
                             {working === u.id ? (
                               <Loader2 className="h-4 w-4 animate-spin" />

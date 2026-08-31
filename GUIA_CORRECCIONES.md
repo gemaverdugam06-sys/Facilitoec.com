@@ -3,6 +3,7 @@
 ## 1️⃣ CRÍTICO: Corregir Memory Leak en Upload de Imágenes
 
 ### El Problema
+
 ```tsx
 // ❌ MALO - Crea strings enormes en memoria
 const addFiles = (list: FileList | null) => {
@@ -18,6 +19,7 @@ const addFiles = (list: FileList | null) => {
 ```
 
 ### La Solución
+
 Reemplazar `src/routes/_authenticated/publicar.tsx` líneas 68-80 con:
 
 ```tsx
@@ -25,7 +27,7 @@ const addFiles = (list: FileList | null) => {
   if (!list) return;
   const arr = Array.from(list).slice(0, 8 - files.length);
   setFiles((prev) => [...prev, ...arr]);
-  
+
   // ✅ Usar Object URLs en lugar de Data URLs
   arr.forEach((f) => {
     const url = URL.createObjectURL(f);
@@ -36,7 +38,7 @@ const addFiles = (list: FileList | null) => {
 const removeFile = (i: number) => {
   // Limpiar Object URL cuando se elimina
   const url = previews[i];
-  if (url && url.startsWith('blob:')) {
+  if (url && url.startsWith("blob:")) {
     URL.revokeObjectURL(url);
   }
   setFiles((prev) => prev.filter((_, idx) => idx !== i));
@@ -46,8 +48,8 @@ const removeFile = (i: number) => {
 // Cleanup cuando el componente se desmonta
 useEffect(() => {
   return () => {
-    previews.forEach(url => {
-      if (url && url.startsWith('blob:')) {
+    previews.forEach((url) => {
+      if (url && url.startsWith("blob:")) {
         URL.revokeObjectURL(url);
       }
     });
@@ -56,6 +58,7 @@ useEffect(() => {
 ```
 
 ### Beneficios
+
 - Reduce uso de memoria de ~21MB a ~2-3MB (8 imágenes de 2MB)
 - Carga más rápida de previews
 - Sin lag en dispositivos móviles
@@ -65,12 +68,13 @@ useEffect(() => {
 ## 2️⃣ IMPORTANTE: Validar Imágenes Antes de Upload
 
 ### Agregar Validación
+
 En el archivo `src/routes/_authenticated/publicar.tsx`, antes de `const addFiles`:
 
 ```tsx
 // Configuración de validación
 const IMAGE_CONFIG = {
-  ALLOWED_TYPES: ['image/jpeg', 'image/png', 'image/webp'],
+  ALLOWED_TYPES: ["image/jpeg", "image/png", "image/webp"],
   MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
   MAX_FILES: 8,
 };
@@ -82,23 +86,23 @@ const validateFile = (file: File): { valid: boolean; error?: string } => {
       error: `${file.name}: Solo JPG, PNG y WebP son permitidos.`,
     };
   }
-  
+
   if (file.size > IMAGE_CONFIG.MAX_FILE_SIZE) {
     return {
       valid: false,
       error: `${file.name}: El archivo es muy grande (máx. 5MB).`,
     };
   }
-  
+
   return { valid: true };
 };
 
 const addFiles = (list: FileList | null) => {
   if (!list) return;
-  
+
   const validated: File[] = [];
   const errors: string[] = [];
-  
+
   for (const file of list) {
     const validation = validateFile(file);
     if (validation.valid) {
@@ -107,26 +111,26 @@ const addFiles = (list: FileList | null) => {
       errors.push(validation.error);
     }
   }
-  
+
   // Mostrar errores de validación
-  errors.forEach(err => toast.error(err));
-  
+  errors.forEach((err) => toast.error(err));
+
   // Limitar cantidad total
   const available = IMAGE_CONFIG.MAX_FILES - files.length;
   const toAdd = validated.slice(0, available);
-  
+
   if (toAdd.length === 0) {
     return;
   }
-  
-  setFiles(prev => [...prev, ...toAdd]);
-  
+
+  setFiles((prev) => [...prev, ...toAdd]);
+
   // Crear previews con Object URLs
   toAdd.forEach((f) => {
     const url = URL.createObjectURL(f);
-    setPreviews(prev => [...prev, url]);
+    setPreviews((prev) => [...prev, url]);
   });
-  
+
   // Feedback positivo
   if (toAdd.length > 0) {
     toast.success(`${toAdd.length} imagen(s) agregada(s)`);
@@ -139,6 +143,7 @@ const addFiles = (list: FileList | null) => {
 ## 3️⃣ IMPORTANTE: Optimizar Query de Mis-Publicaciones
 
 ### El Problema Actual
+
 ```tsx
 // ❌ INEFICIENTE: 2 queries + búsqueda O(n²)
 const { data: listaProductos } = await supabase
@@ -149,7 +154,10 @@ const { data: listaProductos } = await supabase
 const { data: txs } = await supabase
   .from("transacciones")
   .select("...")
-  .in("producto_id", listaProductos.map((p) => p.id));
+  .in(
+    "producto_id",
+    listaProductos.map((p) => p.id),
+  );
 
 listaProductos.forEach((p) => {
   const txAsociada = txs?.find((t) => t.producto_id === p.id); // O(n²)
@@ -157,13 +165,15 @@ listaProductos.forEach((p) => {
 ```
 
 ### La Solución
+
 Reemplazar en `src/routes/_authenticated/mis-publicaciones.tsx` líneas 75-100:
 
 ```tsx
 // ✅ Una query con JOIN automático
 const { data, error } = await supabase
   .from("productos")
-  .select(`
+  .select(
+    `
     id,
     titulo,
     descripcion,
@@ -183,7 +193,8 @@ const { data, error } = await supabase
       monto,
       pasarela
     )
-  `)
+  `,
+  )
   .eq("user_id", user.id)
   .order("created_at", { ascending: false });
 
@@ -216,6 +227,7 @@ setItems(items);
 ```
 
 ### Beneficios
+
 - Una sola query en lugar de dos
 - Código más limpio y mantenible
 - Mejor performance (especialmente con 20+ productos)
@@ -225,6 +237,7 @@ setItems(items);
 ## 4️⃣ IMPORTANTE: Rate Limiting en Autenticación
 
 ### Crear Utility de Rate Limiting
+
 Nuevo archivo: `src/lib/rate-limit.ts`
 
 ```typescript
@@ -246,7 +259,7 @@ const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 export async function checkRateLimit(config: RateLimitConfig): Promise<RateLimitResult> {
   const now = Date.now();
   const stored = rateLimitStore.get(config.key);
-  
+
   // Si no existe o expiró, crear nuevo
   if (!stored || now >= stored.resetAt) {
     rateLimitStore.set(config.key, {
@@ -255,13 +268,13 @@ export async function checkRateLimit(config: RateLimitConfig): Promise<RateLimit
     });
     return { success: true };
   }
-  
+
   // Si no ha excedido limite, incrementar
   if (stored.count < config.limit) {
     stored.count++;
     return { success: true };
   }
-  
+
   // Excedió límite
   return {
     success: false,
@@ -270,49 +283,51 @@ export async function checkRateLimit(config: RateLimitConfig): Promise<RateLimit
 }
 
 // Limpiar entradas expiradas cada hora
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of rateLimitStore.entries()) {
-    if (now >= value.resetAt) {
-      rateLimitStore.delete(key);
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [key, value] of rateLimitStore.entries()) {
+      if (now >= value.resetAt) {
+        rateLimitStore.delete(key);
+      }
     }
-  }
-}, 60 * 60 * 1000);
+  },
+  60 * 60 * 1000,
+);
 ```
 
 ### Usar en Auth
+
 Modificar `src/routes/auth.tsx` línea 81:
 
 ```tsx
 const handleSignIn = async (e: React.FormEvent) => {
   e.preventDefault();
-  
+
   // Verificar rate limit
   const rateLimitResult = await checkRateLimit({
     key: `signin:${email}`,
     limit: 5,
     window: 60 * 15, // 15 minutos
   });
-  
+
   if (!rateLimitResult.success) {
     const seconds = Math.ceil((rateLimitResult.resetIn || 0) / 1000);
     const minutes = Math.ceil(seconds / 60);
-    return toast.error(
-      `Demasiados intentos. Intenta en ${minutes} minuto(s).`
-    );
+    return toast.error(`Demasiados intentos. Intenta en ${minutes} minuto(s).`);
   }
-  
+
   setLoading(true);
   const { error } = await supabase.auth.signInWithPassword({
     email: email.trim(),
     password,
   });
   setLoading(false);
-  
+
   if (error) {
     return toast.error(toUserMessage(error, "No se pudo iniciar sesión."));
   }
-  
+
   toast.success(t("welcome_back"));
 };
 ```
@@ -322,6 +337,7 @@ const handleSignIn = async (e: React.FormEvent) => {
 ## 5️⃣ IMPORTANTE: Agregar CSP Headers
 
 ### Modificar `vercel.json`
+
 ```json
 {
   "buildCommand": "npm run build",
@@ -377,6 +393,7 @@ const handleSignIn = async (e: React.FormEvent) => {
 ## 6️⃣ IMPORTANTE: Error Handling en Carga de Categorías
 
 ### Archivo: `src/routes/index.tsx`
+
 Reemplazar líneas 54-60:
 
 ```tsx
@@ -387,9 +404,9 @@ useEffect(() => {
         .from("categorias")
         .select("id, nombre, icono")
         .order("orden");
-      
+
       if (error) throw error;
-      
+
       if (data) {
         setCategorias(data);
       }
@@ -398,30 +415,28 @@ useEffect(() => {
       toast.error("No se cargaron las categorías. Por favor, recarga la página.");
     }
   };
-  
+
   loadCategorias();
-  
+
   // Expirar promociones vencidas
-  supabase.rpc("expire_promociones").catch(err => {
+  supabase.rpc("expire_promociones").catch((err) => {
     console.error("Error expirando promociones:", err);
   });
 }, []);
 ```
 
 ### Archivo: `src/routes/_authenticated/publicar.tsx`
+
 Reemplazar líneas 63-70:
 
 ```tsx
 useEffect(() => {
   const loadCategorias = async () => {
     try {
-      const { data, error } = await supabase
-        .from("categorias")
-        .select("id, nombre")
-        .order("orden");
-      
+      const { data, error } = await supabase.from("categorias").select("id, nombre").order("orden");
+
       if (error) throw error;
-      
+
       if (data) {
         setCategorias(data);
       }
@@ -430,7 +445,7 @@ useEffect(() => {
       // No mostrar toast aquí porque es en componente montado
     }
   };
-  
+
   loadCategorias();
 }, []);
 ```
@@ -440,31 +455,37 @@ useEffect(() => {
 ## 📋 Checklist de Aplicación
 
 ### Paso 1: Memory Leak (15 min)
+
 - [ ] Editar `src/routes/_authenticated/publicar.tsx`
 - [ ] Reemplazar `addFiles` y `removeFile`
 - [ ] Agregar cleanup effect
 - [ ] Probar: subir 8 imágenes sin lag
 
 ### Paso 2: Validación (20 min)
+
 - [ ] Agregar `IMAGE_CONFIG` y `validateFile` en publicar.tsx
 - [ ] Probar: subir archivo no-imagen (debe rechazar)
 - [ ] Probar: subir archivo >5MB (debe rechazar)
 
 ### Paso 3: Queries (15 min)
+
 - [ ] Editar `src/routes/_authenticated/mis-publicaciones.tsx`
 - [ ] Cambiar a single query con join
 - [ ] Probar: cargar mis-publicaciones sin errores
 
 ### Paso 4: Rate Limiting (20 min)
+
 - [ ] Crear `src/lib/rate-limit.ts`
 - [ ] Modificar `src/routes/auth.tsx`
 - [ ] Probar: intentar login 6+ veces (debe bloquear)
 
 ### Paso 5: CSP Headers (10 min)
+
 - [ ] Actualizar `vercel.json`
 - [ ] Verificar: no hay warnings de CSP en console
 
 ### Paso 6: Error Handling (10 min)
+
 - [ ] Actualizar ambos index.tsx y publicar.tsx
 - [ ] Probar: desconectar internet (debe mostrar error)
 

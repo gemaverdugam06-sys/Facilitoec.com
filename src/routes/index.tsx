@@ -116,7 +116,8 @@ function Home() {
       const normalized = ((data as ProductCardData[]) ?? []).map((p) => ({
         ...p,
         es_destacado:
-          Boolean(p.es_destacado) && (!p.promocionado_hasta || new Date(p.promocionado_hasta) > new Date()),
+          Boolean(p.es_destacado) &&
+          (!p.promocionado_hasta || new Date(p.promocionado_hasta) > new Date()),
       }));
       setProductos(normalized);
       setLoading(false);
@@ -146,27 +147,35 @@ function Home() {
                 </span>
                 <span className="font-semibold">WINFAST</span>
               </div>
-              <h1 className="text-5xl font-extrabold tracking-tight md:text-7xl md:leading-tight logo-heading text-white drop-shadow-lg">{t("tagline")}</h1>
+              <h1 className="text-5xl font-extrabold tracking-tight md:text-7xl md:leading-tight logo-heading text-white drop-shadow-lg">
+                {t("tagline")}
+              </h1>
               <p className="mt-6 max-w-3xl text-slate-200 text-xl md:text-2xl leading-relaxed drop-shadow-lg">
-                Compra y vende en Ecuador de manera simple. Encuentra productos cerca de ti y publica tu anuncio gratis en segundos.
+                Compra y vende en Ecuador de manera simple. Encuentra productos cerca de ti y
+                publica tu anuncio gratis en segundos.
               </p>
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground" />
-                <Input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder={t("search_placeholder")}
-                  className="h-12 rounded-2xl bg-white px-4 pl-10 text-foreground placeholder-slate-400 shadow-sm shadow-black/10 border-0"
-                />
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground" />
+                  <Input
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    placeholder={t("search_placeholder")}
+                    className="h-12 rounded-2xl bg-white px-4 pl-10 text-foreground placeholder-slate-400 shadow-sm shadow-black/10 border-0"
+                  />
+                </div>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="secondary"
+                  className="h-12 rounded-2xl px-8 btn-cta font-semibold"
+                >
+                  <Link to="/publicar">
+                    <Plus className="mr-1 h-5 w-5" />
+                    {t("publish")}
+                  </Link>
+                </Button>
               </div>
-              <Button asChild size="lg" variant="secondary" className="h-12 rounded-2xl px-8 btn-cta font-semibold">
-                <Link to="/publicar">
-                  <Plus className="mr-1 h-5 w-5" />
-                  {t("publish")}
-                </Link>
-              </Button>
-            </div>
             </div>
           </div>
         </div>
@@ -180,7 +189,11 @@ function Home() {
             variant={hasFilters ? "default" : "outline"}
             size="sm"
             onClick={() => setShowFilters((v) => !v)}
-            className={hasFilters ? "bg-gradient-primary" : "border border-violet-200 bg-white text-slate-900 shadow-[0_8px_20px_rgba(124,58,237,0.08)]"}
+            className={
+              hasFilters
+                ? "bg-gradient-primary"
+                : "border border-violet-200 bg-white text-slate-900 shadow-[0_8px_20px_rgba(124,58,237,0.08)]"
+            }
           >
             <SlidersHorizontal className="mr-1 h-4 w-4" /> Filtros{" "}
             {hasFilters && (
@@ -188,7 +201,12 @@ function Home() {
             )}
           </Button>
           {hasFilters && (
-            <Button variant="ghost" size="sm" onClick={clear} className="border border-violet-200 bg-white text-slate-900 shadow-[0_8px_20px_rgba(124,58,237,0.08)]">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clear}
+              className="border border-violet-200 bg-white text-slate-900 shadow-[0_8px_20px_rgba(124,58,237,0.08)]"
+            >
               <X className="mr-1 h-4 w-4" /> Limpiar
             </Button>
           )}
@@ -208,9 +226,7 @@ function Home() {
         {showFilters && (
           <div className="mb-4 grid gap-3 rounded-[1.25rem] border border-violet-100 bg-white p-4 shadow-[0_10px_30px_rgba(124,58,237,0.08)] sm:grid-cols-4">
             <div>
-              <label className="mb-1 block text-xs font-semibold text-violet-700">
-                Provincia
-              </label>
+              <label className="mb-1 block text-xs font-semibold text-violet-700">Provincia</label>
               <Select
                 value={provincia}
                 onValueChange={(v) => {
@@ -222,9 +238,18 @@ function Home() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="border-violet-100 bg-white text-slate-900 shadow-[0_10px_25px_rgba(15,23,42,0.12)]">
-                  <SelectItem value="Todas" className="text-slate-900 focus:bg-violet-50 focus:text-violet-900">Todas</SelectItem>
+                  <SelectItem
+                    value="Todas"
+                    className="text-slate-900 focus:bg-violet-50 focus:text-violet-900"
+                  >
+                    Todas
+                  </SelectItem>
                   {PROVINCIAS.map((p) => (
-                    <SelectItem key={p} value={p} className="text-slate-900 focus:bg-violet-50 focus:text-violet-900">
+                    <SelectItem
+                      key={p}
+                      value={p}
+                      className="text-slate-900 focus:bg-violet-50 focus:text-violet-900"
+                    >
                       {p}
                     </SelectItem>
                   ))}
@@ -240,9 +265,18 @@ function Home() {
                   <SelectValue placeholder={provincia === "Todas" ? "Elige provincia" : "Todas"} />
                 </SelectTrigger>
                 <SelectContent className="border-violet-100 bg-white text-slate-900 shadow-[0_10px_25px_rgba(15,23,42,0.12)]">
-                  <SelectItem value="Todas" className="text-slate-900 focus:bg-violet-50 focus:text-violet-900">Todas</SelectItem>
+                  <SelectItem
+                    value="Todas"
+                    className="text-slate-900 focus:bg-violet-50 focus:text-violet-900"
+                  >
+                    Todas
+                  </SelectItem>
                   {ciudadesDeProv.map((c) => (
-                    <SelectItem key={c} value={c} className="text-slate-900 focus:bg-violet-50 focus:text-violet-900">
+                    <SelectItem
+                      key={c}
+                      value={c}
+                      className="text-slate-900 focus:bg-violet-50 focus:text-violet-900"
+                    >
                       {c}
                     </SelectItem>
                   ))}

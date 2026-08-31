@@ -54,7 +54,8 @@ function AuthPage() {
 
   const runWithLoadingGuard = async <T,>(work: () => Promise<T>): Promise<T | undefined> => {
     setLoading(true);
-    const timeoutId = typeof window !== "undefined" ? window.setTimeout(() => setLoading(false), 10000) : undefined;
+    const timeoutId =
+      typeof window !== "undefined" ? window.setTimeout(() => setLoading(false), 10000) : undefined;
 
     try {
       return await work();
@@ -76,8 +77,6 @@ function AuthPage() {
     const tmr = setTimeout(() => setCooldown((c) => c - 1), 1000);
     return () => clearTimeout(tmr);
   }, [cooldown]);
-
-
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -242,12 +241,14 @@ function AuthPage() {
           <CardTitle className="flex items-center justify-center gap-3 text-3xl font-semibold tracking-tight text-white">
             <span>WINFAST</span>
           </CardTitle>
-          <CardDescription className="text-sm text-slate-200">
-            {t("tagline")}
-          </CardDescription>
+          <CardDescription className="text-sm text-slate-200">{t("tagline")}</CardDescription>
         </CardHeader>
         <CardContent className="px-8 py-8">
-          <Tabs value={emailTab} onValueChange={(v) => setEmailTab(v as "signin" | "signup")} className="space-y-4">
+          <Tabs
+            value={emailTab}
+            onValueChange={(v) => setEmailTab(v as "signin" | "signup")}
+            className="space-y-4"
+          >
             <TabsList className="grid w-full grid-cols-2 overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900/90 p-1 shadow-sm">
               <TabsTrigger
                 value="signin"
@@ -305,7 +306,11 @@ function AuthPage() {
                     </button>
                   </div>
                 </div>
-                <Button type="submit" disabled={loading} className="w-full rounded-2xl border border-primary/80 bg-gradient-primary/95 text-white shadow-lg shadow-primary/10 hover:bg-gradient-primary">
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full rounded-2xl border border-primary/80 bg-gradient-primary/95 text-white shadow-lg shadow-primary/10 hover:bg-gradient-primary"
+                >
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("sign_in")}
                 </Button>
               </form>
@@ -347,7 +352,8 @@ function AuthPage() {
                     className="bg-slate-950 border border-slate-700 text-white placeholder:text-slate-500 focus:border-primary/70"
                   />
                   <p className="text-[11px] text-slate-400">
-                    Opcional: podrás verificar tu número dentro de la app después de crear la cuenta.
+                    Opcional: podrás verificar tu número dentro de la app después de crear la
+                    cuenta.
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -392,18 +398,24 @@ function AuthPage() {
                       onClick={() => setShowConfirmPassword((v) => !v)}
                       className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-white"
                     >
-                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                     </button>
                   </div>
                 </div>
-                <Button type="submit" disabled={loading} className="w-full rounded-2xl border border-primary/80 bg-gradient-primary/95 text-white shadow-lg shadow-primary/10 hover:bg-gradient-primary">
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full rounded-2xl border border-primary/80 bg-gradient-primary/95 text-white shadow-lg shadow-primary/10 hover:bg-gradient-primary"
+                >
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("sign_up")}
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
-
-
 
           <p className="mt-4 text-center text-xs text-muted-foreground">
             <Link to="/" className="hover:underline">

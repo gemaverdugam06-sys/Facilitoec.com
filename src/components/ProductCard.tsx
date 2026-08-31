@@ -20,7 +20,8 @@ export function ProductCard({ p }: { p: ProductCardData }) {
   const { t } = useI18n();
   const img = useSignedUrl("productos", p.imagenes?.[0]);
   const MotionLink = motion(Link as any);
-  const destacadoActivo = !!p.es_destacado && (!p.promocionado_hasta || new Date(p.promocionado_hasta) > new Date());
+  const destacadoActivo =
+    !!p.es_destacado && (!p.promocionado_hasta || new Date(p.promocionado_hasta) > new Date());
 
   return (
     <MotionLink

@@ -45,7 +45,9 @@ interface Pub {
 }
 
 const normalizePaymentState = (value?: string | null) =>
-  String(value ?? "").trim().toUpperCase();
+  String(value ?? "")
+    .trim()
+    .toUpperCase();
 
 export const Route = createFileRoute("/_authenticated/mis-publicaciones")({
   component: MisPubs,
@@ -75,7 +77,8 @@ function MisPubs() {
       // Optimizado: Una sola query con JOIN para mejor performance
       const { data: productsWithTx, error: joinErr } = await supabase
         .from("productos")
-        .select(`
+        .select(
+          `
           id,
           titulo,
           descripcion,
@@ -92,7 +95,8 @@ function MisPubs() {
             notas_admin,
             created_at
           )
-        `)
+        `,
+        )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 

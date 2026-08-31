@@ -7,7 +7,9 @@ export function Footer() {
         <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2">
             <p className="text-sm font-medium text-white">WINFAST</p>
-            <p className="text-sm text-slate-400">© 2026 WINFAST. Plataforma digital independiente.</p>
+            <p className="text-sm text-slate-400">
+              © 2026 WINFAST. Plataforma digital independiente.
+            </p>
           </div>
 
           <nav aria-label="Enlaces legales" className="flex flex-wrap items-center gap-3 text-sm">

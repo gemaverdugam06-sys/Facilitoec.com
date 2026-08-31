@@ -60,14 +60,17 @@ export async function checkRateLimit(config: RateLimitConfig): Promise<RateLimit
 // Limpiar entradas expiradas cada hora
 if (typeof window === "undefined") {
   // Solo en servidor
-  const cleanupInterval = setInterval(() => {
-    const now = Date.now();
-    for (const [key, value] of rateLimitStore.entries()) {
-      if (now >= value.resetAt) {
-        rateLimitStore.delete(key);
+  const cleanupInterval = setInterval(
+    () => {
+      const now = Date.now();
+      for (const [key, value] of rateLimitStore.entries()) {
+        if (now >= value.resetAt) {
+          rateLimitStore.delete(key);
+        }
       }
-    }
-  }, 60 * 60 * 1000);
+    },
+    60 * 60 * 1000,
+  );
 
   // Cleanup en shutdown
   if (global.process) {

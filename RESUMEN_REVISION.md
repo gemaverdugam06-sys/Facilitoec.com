@@ -1,7 +1,9 @@
 # 📊 RESUMEN EJECUTIVO - FACILITOEC
 
 ## ¿Qué es FACILITOEC?
+
 Marketplace ecuatoriano fullstack donde usuarios pueden:
+
 - ✅ Comprar/vender productos en categorías (tecnología, vehículos, hogar, etc.)
 - ✅ Comunicarse por chat entre compradores y vendedores
 - ✅ Crear perfiles y verificarse por SMS
@@ -27,6 +29,7 @@ Tests:          0/10 ❌ (Sin tests unitarios/E2E)
 ## 🚨 Problemas Críticos Encontrados
 
 ### 1. **Memory Leak en Upload de Imágenes** 🔴
+
 ```
 Impacto: App podría crashear al subir fotos en móviles
 Severidad: CRÍTICA
@@ -34,6 +37,7 @@ Tiempo de arreglo: 15 minutos
 ```
 
 **El problema:** Convierte imágenes a strings base64 enormes
+
 - 8 imágenes × 2MB = ~21MB en RAM
 - Causa lag en dispositivos móviles
 
@@ -42,6 +46,7 @@ Tiempo de arreglo: 15 minutos
 ---
 
 ### 2. **Consultas Ineficientes (N+1)** 🟡
+
 ```
 Ubicación: Página "Mis publicaciones"
 Impacto: Lentitud al cargar anuncios
@@ -55,6 +60,7 @@ Tiempo de arreglo: 15 minutos
 ---
 
 ### 3. **Falta Validación de Imágenes** 🟡
+
 ```
 Impacto: Usuario podría subir virus/archivos maliciosos
 Severidad: IMPORTANTE
@@ -67,6 +73,7 @@ Tiempo de arreglo: 20 minutos
 ---
 
 ### 4. **Sin Rate Limiting en Autenticación** 🟡
+
 ```
 Impacto: Vulnerable a ataques de fuerza bruta
 Severidad: IMPORTANTE
@@ -79,6 +86,7 @@ Tiempo de arreglo: 20 minutos
 ---
 
 ### 5. **Falta CSP Headers** 🟡
+
 ```
 Impacto: Vulnerable a XSS
 Severidad: IMPORTANTE
@@ -103,6 +111,7 @@ Tiempo de arreglo: 10 minutos
 ## 🎯 Plan de Acción
 
 ### **Fase 1: Emergencia** (Este fin de semana - 2 horas)
+
 1. ✅ Corregir memory leak de imágenes
 2. ✅ Agregar validación de imágenes
 3. ✅ Implementar rate limiting
@@ -111,12 +120,14 @@ Tiempo de arreglo: 10 minutos
 **Resultado:** App segura y estable para producción
 
 ### **Fase 2: Optimización** (Próxima semana - 3 horas)
+
 1. ✅ Optimizar queries con joins
 2. ✅ Agregar Sentry para error tracking
 3. ✅ Implementar audit logging para admin
 4. ✅ Agregar caching headers
 
 ### **Fase 3: Testing** (2 semanas)
+
 1. ✅ Tests unitarios (Jest)
 2. ✅ Tests E2E (Cypress)
 3. ✅ Penetration testing
@@ -126,13 +137,13 @@ Tiempo de arreglo: 10 minutos
 
 ## 📈 Comparativa Antes/Después
 
-| Métrica | Antes | Después | Mejora |
-|---------|-------|---------|--------|
-| Memory al subir imágenes | 21MB | 2-3MB | -85% |
-| Tiempo carga mis-publicaciones | 2s | 0.8s | -60% |
-| Intentos login sin límite | Sí | 5 cada 15min | ✅ |
-| Vulnerabilidades XSS | 1+ | 0 | ✅ |
-| Calificación seguridad | 7/10 | 9/10 | +28% |
+| Métrica                        | Antes | Después      | Mejora |
+| ------------------------------ | ----- | ------------ | ------ |
+| Memory al subir imágenes       | 21MB  | 2-3MB        | -85%   |
+| Tiempo carga mis-publicaciones | 2s    | 0.8s         | -60%   |
+| Intentos login sin límite      | Sí    | 5 cada 15min | ✅     |
+| Vulnerabilidades XSS           | 1+    | 0            | ✅     |
+| Calificación seguridad         | 7/10  | 9/10         | +28%   |
 
 ---
 
@@ -156,18 +167,21 @@ Tiempo de arreglo: 10 minutos
 ## 🚀 Próximos Pasos
 
 ### Opción A: **Yo aplico los cambios**
+
 1. Proporciona acceso al repo (GitHub)
 2. Creo pull request con todas las correcciones
 3. Tu equipo revisa y aprueba
 4. Deploy a Vercel
 
 ### Opción B: **Tú aplicas los cambios**
+
 1. Sigue GUIA_CORRECCIONES.md paso a paso
 2. Usa el código proporcionado
 3. Prueba localmente con `npm run preview`
 4. Deploy cuando esté listo
 
 ### Opción C: **Híbrido**
+
 Yo hago correcciones críticas, tú haces las demás
 
 ---
@@ -175,6 +189,7 @@ Yo hago correcciones críticas, tú haces las demás
 ## 💬 Recomendaciones Finales
 
 ### Antes de Publicar en Producción
+
 - [ ] Aplicar todas las correcciones de Fase 1
 - [ ] Probar en Vercel preview
 - [ ] Verificar no hay errores en console
@@ -182,6 +197,7 @@ Yo hago correcciones críticas, tú haces las demás
 - [ ] Backup de base de datos
 
 ### Después de Publicar
+
 - [ ] Habilitar error tracking (Sentry)
 - [ ] Monitorear performance
 - [ ] Recopilar feedback de usuarios
@@ -203,4 +219,4 @@ Yo hago correcciones críticas, tú haces las demás
 
 ---
 
-*Revisión completada: 28 de Agosto, 2026*
+_Revisión completada: 28 de Agosto, 2026_

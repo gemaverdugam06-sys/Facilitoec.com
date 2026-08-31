@@ -25,7 +25,7 @@ export interface ReportInput {
 
 export async function submitReport(
   supabase: any,
-  report: ReportInput
+  report: ReportInput,
 ): Promise<{ success: boolean; error?: string; reportId?: string }> {
   try {
     if (!report.objeto_id || !report.razon) {

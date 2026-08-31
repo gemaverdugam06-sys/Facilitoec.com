@@ -86,7 +86,8 @@ function CategoriaPage() {
       const normalized = ((data as ProductCardData[]) ?? []).map((p) => ({
         ...p,
         es_destacado:
-          Boolean(p.es_destacado) && (!p.promocionado_hasta || new Date(p.promocionado_hasta) > new Date()),
+          Boolean(p.es_destacado) &&
+          (!p.promocionado_hasta || new Date(p.promocionado_hasta) > new Date()),
       }));
       setProductos(normalized);
       setLoading(false);

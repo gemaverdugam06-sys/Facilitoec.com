@@ -44,7 +44,7 @@ function PublicarReseñaPage() {
               titulo,
               user_id
             )
-          `
+          `,
           )
           .eq("id", transaccionId)
           .single();
@@ -112,16 +112,14 @@ function PublicarReseñaPage() {
         toast.success("Reseña actualizada");
       } else {
         // Create new review
-        const { error } = await supabase
-          .from("reseñas_vendedores")
-          .insert({
-            transaccion_id: transaccionId,
-            vendedor_id: vendedor.id,
-            comprador_id: user.id,
-            calificacion,
-            comentario: comentario || null,
-            estado: "visible",
-          });
+        const { error } = await supabase.from("reseñas_vendedores").insert({
+          transaccion_id: transaccionId,
+          vendedor_id: vendedor.id,
+          comprador_id: user.id,
+          calificacion,
+          comentario: comentario || null,
+          estado: "visible",
+        });
 
         if (error) throw error;
         toast.success("¡Reseña publicada!");
@@ -167,9 +165,7 @@ function PublicarReseñaPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>
-              {existingReview ? "Editar Reseña" : "Escribir Reseña"}
-            </CardTitle>
+            <CardTitle>{existingReview ? "Editar Reseña" : "Escribir Reseña"}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -206,9 +202,7 @@ function PublicarReseñaPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="comentario">
-                  Comentario (opcional, máximo 500 caracteres)
-                </Label>
+                <Label htmlFor="comentario">Comentario (opcional, máximo 500 caracteres)</Label>
                 <Textarea
                   id="comentario"
                   placeholder="Comparte tu experiencia con este vendedor..."
@@ -218,15 +212,13 @@ function PublicarReseñaPage() {
                   rows={4}
                   className="resize-none"
                 />
-                <p className="text-xs text-muted-foreground">
-                  {comentario.length}/500
-                </p>
+                <p className="text-xs text-muted-foreground">{comentario.length}/500</p>
               </div>
 
               <div className="rounded-lg bg-blue-500/10 p-3 text-sm text-blue-600">
                 <p>
-                  💡 <span className="font-semibold">Consejo:</span> Sé honesto y específico sobre tu experiencia.
-                  Esto ayuda a otros compradores a tomar decisiones informadas.
+                  💡 <span className="font-semibold">Consejo:</span> Sé honesto y específico sobre
+                  tu experiencia. Esto ayuda a otros compradores a tomar decisiones informadas.
                 </p>
               </div>
 
@@ -237,15 +229,13 @@ function PublicarReseñaPage() {
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Guardando...
                     </>
+                  ) : existingReview ? (
+                    "Actualizar Reseña"
                   ) : (
-                    existingReview ? "Actualizar Reseña" : "Publicar Reseña"
+                    "Publicar Reseña"
                   )}
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => nav({ to: "/" })}
-                >
+                <Button type="button" variant="outline" onClick={() => nav({ to: "/" })}>
                   Cancelar
                 </Button>
               </div>

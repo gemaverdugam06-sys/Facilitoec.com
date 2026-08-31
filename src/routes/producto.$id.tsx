@@ -11,7 +11,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, MessageCircle, Phone, Sparkles, ArrowLeft, Loader2, Star, Flag } from "lucide-react";
+import {
+  MapPin,
+  MessageCircle,
+  Phone,
+  Sparkles,
+  ArrowLeft,
+  Loader2,
+  Star,
+  Flag,
+} from "lucide-react";
 import { toast } from "sonner";
 import { toUserMessage } from "@/lib/error-messages";
 import { buildWhatsappLink } from "@/lib/whatsapp";
@@ -97,7 +106,9 @@ function ProductoPage() {
             // Get recent reviews (first 3)
             const { data: reviews } = await supabase
               .from("reseñas_vendedores")
-              .select("*, profiles!reseñas_vendedores_comprador_id_fkey(nombre_completo, avatar_url)")
+              .select(
+                "*, profiles!reseñas_vendedores_comprador_id_fkey(nombre_completo, avatar_url)",
+              )
               .eq("vendedor_id", producto.user_id)
               .eq("estado", "visible")
               .order("created_at", { ascending: false })
@@ -295,7 +306,12 @@ function ProductoPage() {
                 (user && isVerified && waLink ? (
                   <motion.div whileHover={{ scale: 1.02 }} className="flex-1 will-change-transform">
                     <Button asChild variant="outline" className="flex-1">
-                      <a href={waLink} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center">
+                      <a
+                        href={waLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center"
+                      >
                         <Phone className="mr-1 h-4 w-4" /> {t("open_whatsapp")}
                       </a>
                     </Button>
@@ -364,7 +380,8 @@ function ProductoPage() {
                     {(vendorStats.avg_rating || 0).toFixed(1)} de 5
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    ({vendorStats.review_count} {vendorStats.review_count === 1 ? "reseña" : "reseñas"})
+                    ({vendorStats.review_count}{" "}
+                    {vendorStats.review_count === 1 ? "reseña" : "reseñas"})
                   </span>
                 </div>
               ) : null}

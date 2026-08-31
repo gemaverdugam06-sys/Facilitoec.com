@@ -9,12 +9,14 @@
 ## 📋 Pre-Deploy Checklist
 
 ### En tu Máquina Local
+
 - [x] Compilación exitosa: `npm run build`
 - [x] Linting exitoso: `npm run lint`
 - [x] TypeScript sin errores
 - [x] Git status limpio
 
 ### En el Código
+
 - [x] Memory leak corregido (Object URLs)
 - [x] Validación de imágenes implementada
 - [x] Rate limiting en auth
@@ -23,6 +25,7 @@
 - [x] Error handling mejorado
 
 ### En Supabase
+
 - [x] RLS está configurado (verificado en revisión)
 - [x] Service role key seguro
 - [x] Migraciones aplicadas
@@ -63,6 +66,7 @@ git push origin main
 4. Ver que el build es **✅ Success**
 
 **Indicadores de éxito:**
+
 - ✅ Build duración: ~2-3 minutos
 - ✅ No hay errores rojos
 - ✅ Se asigna URL preview
@@ -128,6 +132,7 @@ curl -I https://facilitoec.com | grep -i "Content-Security-Policy"
 ## 🔐 Verificar Headers de Seguridad
 
 ### Desde Terminal
+
 ```bash
 # CSP Header
 curl -I https://facilitoec.com | grep -i CSP
@@ -137,6 +142,7 @@ curl -I https://facilitoec.com | grep -i CSP
 ```
 
 ### Desde DevTools
+
 1. F12 → Network tab
 2. Refrescar página
 3. Hacer click en el primer request (html)
@@ -152,6 +158,7 @@ curl -I https://facilitoec.com | grep -i CSP
 ## ⚠️ Si Algo Sale Mal
 
 ### Error: "Build failed"
+
 ```bash
 # 1. Ver qué salió mal
 npm run build
@@ -169,6 +176,7 @@ git push origin main
 ```
 
 ### Memory aún alto
+
 ```bash
 # Verificar en DevTools que:
 # 1. No estás usando Data URLs
@@ -177,6 +185,7 @@ git push origin main
 ```
 
 ### Rate limit no funciona
+
 ```bash
 # Verificar en Console (F12) que:
 # 1. No hay error "checkRateLimit is not defined"
@@ -189,6 +198,7 @@ git push origin main
 ## 📊 Monitoreo Post-Deploy
 
 ### Métricas Esperadas
+
 ```
 Memory en upload:      ~2-3MB (antes: 21MB)
 Tiempo mis-publicaciones: ~0.8s (antes: 2s)
@@ -199,12 +209,14 @@ Velocity (LCP):        <2.5s
 ### Herramientas Recomendadas
 
 **1. Vercel Analytics**
+
 ```
 vercel.com → tu proyecto → Analytics
 Ver: Web Vitals, LCP, CLS, FID
 ```
 
 **2. DevTools Lighthouse**
+
 ```
 F12 → Lighthouse
 Run audit → Ver score de Performance
@@ -212,6 +224,7 @@ Debe estar > 85
 ```
 
 **3. Opcional: Sentry**
+
 ```
 Próximamente:
 1. Crear cuenta en sentry.io
@@ -226,6 +239,7 @@ Próximamente:
 ## 🔄 Rollback (Si necesario)
 
 ### Revertir Rápidamente
+
 ```bash
 # 1. Ver historial
 git log --oneline | head -10
@@ -239,6 +253,7 @@ git push origin main
 ```
 
 ### Si algo está REALMENTE malo
+
 ```bash
 # Deshabilitar app en Vercel (mientras arreglas):
 1. vercel.com → Proyecto → Settings
@@ -251,11 +266,13 @@ git push origin main
 ## 📞 Contacto & Soporte
 
 ### Documentación de Referencia
+
 - [CAMBIOS_APLICADOS.md](CAMBIOS_APLICADOS.md) - Qué se cambió
 - [REVISION_COMPLETA.md](REVISION_COMPLETA.md) - Por qué se cambió
 - [GUIA_CORRECCIONES.md](GUIA_CORRECCIONES.md) - Cómo se cambió
 
 ### Si tienes dudas técnicas
+
 1. Revisar documentación arriba
 2. Ver git diff de los cambios
 3. Prueba local con `npm run preview`
@@ -264,31 +281,34 @@ git push origin main
 
 ## ✅ Resumen del Deploy
 
-| Paso | Tiempo | Status |
-|------|--------|--------|
-| Actualizar Git | 5 min | ⏰ |
-| Vercel auto-deploy | 3 min | ⏰ |
-| Testing Preview | 10 min | ⏰ |
-| Promover Producción | 1 min | ⏰ |
-| Testing Producción | 5 min | ⏰ |
-| **TOTAL** | **~25 min** | ⏱️ |
+| Paso                | Tiempo      | Status |
+| ------------------- | ----------- | ------ |
+| Actualizar Git      | 5 min       | ⏰     |
+| Vercel auto-deploy  | 3 min       | ⏰     |
+| Testing Preview     | 10 min      | ⏰     |
+| Promover Producción | 1 min       | ⏰     |
+| Testing Producción  | 5 min       | ⏰     |
+| **TOTAL**           | **~25 min** | ⏱️     |
 
 ---
 
 ## 🎯 Resultados Esperados Después del Deploy
 
 ### Performance ✅
+
 - Memory en upload: 21MB → 2MB (-90%)
 - Tiempo mis-publicaciones: 2s → 0.8s (-60%)
 - Zero lag en dispositivos móviles
 
 ### Seguridad ✅
+
 - CSP headers previenen XSS
 - Rate limiting previene brute force
 - Validación de archivos previene malware
 - HSTS y X-Frame-Options activas
 
 ### User Experience ✅
+
 - Subida de fotos más rápida
 - Carga de mis-publicaciones instantánea
 - Mejor feedback en formularios
@@ -300,7 +320,7 @@ git push origin main
 
 ```
 ✅ Build: OK
-✅ Lint: OK  
+✅ Lint: OK
 ✅ Security: OK
 ✅ Performance: OK
 ✅ All tests: PASS

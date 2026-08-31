@@ -1,13 +1,11 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [
-    "./src/**/*.{html,js,ts,jsx,tsx}",
-  ],
+  content: ["./src/**/*.{html,js,ts,jsx,tsx}"],
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
-        display: ['Poppins', 'Inter', 'system-ui'],
+        sans: ["Inter", "ui-sans-serif", "system-ui"],
+        display: ["Poppins", "Inter", "system-ui"],
       },
       colors: {
         background: "#f8fafc",
@@ -33,12 +31,13 @@ module.exports = {
         "warning-foreground": "#ffffff",
       },
       fontSize: {
-        'hero-sm': ['1.875rem', { lineHeight: '1.05' }], /* 30px */
-        'hero-md': ['3rem', { lineHeight: '1.03' }], /* 48px */
+        "hero-sm": ["1.875rem", { lineHeight: "1.05" }] /* 30px */,
+        "hero-md": ["3rem", { lineHeight: "1.03" }] /* 48px */,
       },
       backgroundImage: {
         "gradient-primary": "linear-gradient(90deg, #7c3aed 0%, #3b82f6 100%)",
-        "gradient-hero": "linear-gradient(180deg, rgba(124,58,237,0.92) 0%, rgba(59,130,246,0.95) 100%)",
+        "gradient-hero":
+          "linear-gradient(180deg, rgba(124,58,237,0.92) 0%, rgba(59,130,246,0.95) 100%)",
       },
       boxShadow: {
         card: "0 25px 50px -12px rgba(15, 23, 42, 0.1)",
@@ -47,4 +46,4 @@ module.exports = {
     },
   },
   plugins: [],
-}
+};
