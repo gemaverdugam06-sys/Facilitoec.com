@@ -6,11 +6,12 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { useSignedUrl, useSignedUrls } from "@/lib/storage";
 import { Header } from "@/components/Header";
+import { ReportDialog } from "@/components/ReportDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MapPin, MessageCircle, Phone, Sparkles, ArrowLeft, Loader2 } from "lucide-react";
+import { MapPin, MessageCircle, Phone, Sparkles, ArrowLeft, Loader2, Star, Flag } from "lucide-react";
 import { toast } from "sonner";
 import { toUserMessage } from "@/lib/error-messages";
 import { buildWhatsappLink } from "@/lib/whatsapp";
@@ -36,6 +37,12 @@ interface Producto {
   } | null;
 }
 
+interface VendorStats {
+  id: string;
+  avg_rating: number;
+  review_count: number;
+}
+
 export const Route = createFileRoute("/producto/$id")({
   component: ProductoPage,
 });
@@ -48,6 +55,9 @@ function ProductoPage() {
   const [p, setP] = useState<Producto | null>(null);
   const [loading, setLoading] = useState(true);
   const [idx, setIdx] = useState(0);
+  const [vendorStats, setVendorStats] = useState<VendorStats | null>(null);
+  const [recentReviews, setRecentReviews] = useState<any[]>([]);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const images = useSignedUrls("productos", p?.imagenes ?? []);
   const vendorAvatarUrl = useSignedUrl("avatars", p?.profiles?.avatar_url);
   useEffect(() => {
@@ -69,7 +79,35 @@ function ProductoPage() {
           return;
         }
 
-        setP((data as Producto | null) ?? null);
+        const producto = (data as Producto | null) ?? null;
+        setP(producto);
+
+        // Load vendor stats and recent reviews
+        if (producto?.user_id) {
+          try {
+            // Get vendor stats
+            const { data: stats } = await supabase
+              .from("perfil_vendedor_stats")
+              .select("*")
+              .eq("id", producto.user_id)
+              .maybeSingle();
+
+            if (stats) setVendorStats(stats as VendorStats);
+
+            // Get recent reviews (first 3)
+            const { data: reviews } = await supabase
+              .from("reseñas_vendedores")
+              .select("*, profiles!reseñas_vendedores_comprador_id_fkey(nombre_completo, avatar_url)")
+              .eq("vendedor_id", producto.user_id)
+              .eq("estado", "visible")
+              .order("created_at", { ascending: false })
+              .limit(3);
+
+            if (reviews) setRecentReviews(reviews);
+          } catch (err) {
+            console.error("Error loading vendor reviews:", err);
+          }
+        }
       } catch (error) {
         console.error("Error inesperado cargando producto:", error);
         if (active) setP(null);
@@ -160,7 +198,7 @@ function ProductoPage() {
 
   const waLink = buildWhatsappLink(
     p.whatsapp,
-    `Hola, vi tu anuncio "${p.titulo}" en FACILITOEC y me interesa. ¿Sigue disponible?`,
+    `Hola, vi tu anuncio "${p.titulo}" en WINFAST y me interesa. ¿Sigue disponible?`,
   );
 
   return (
@@ -269,6 +307,15 @@ function ProductoPage() {
                     </Button>
                   </motion.div>
                 ))}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setReportDialogOpen(true)}
+                className="text-muted-foreground hover:text-destructive"
+                title="Reportar esta publicación"
+              >
+                <Flag className="h-4 w-4" />
+              </Button>
             </div>
             {(!user || !isVerified) && (
               <p className="text-xs text-muted-foreground">
@@ -283,8 +330,100 @@ function ProductoPage() {
               </h2>
               <p className="whitespace-pre-wrap text-sm leading-relaxed">{p.descripcion}</p>
             </div>
+
+            {/* Vendor Reviews Section */}
+            <div className="mt-6 border-t pt-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Opiniones del vendedor</h2>
+                {vendorStats && vendorStats.review_count > 0 && (
+                  <Link
+                    to="/vendedor/$vendedorId/reseñas"
+                    params={{ vendedorId: p.user_id }}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Ver todas ({vendorStats.review_count})
+                  </Link>
+                )}
+              </div>
+
+              {vendorStats ? (
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-4 w-4 ${
+                          i < Math.floor(vendorStats.avg_rating || 0)
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-muted-foreground"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm font-semibold">
+                    {(vendorStats.avg_rating || 0).toFixed(1)} de 5
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    ({vendorStats.review_count} {vendorStats.review_count === 1 ? "reseña" : "reseñas"})
+                  </span>
+                </div>
+              ) : null}
+
+              {recentReviews.length > 0 ? (
+                <div className="space-y-3">
+                  {recentReviews.map((review) => (
+                    <Card key={review.id} className="p-3">
+                      <div className="flex gap-2">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={review.profiles?.avatar_url ?? undefined} />
+                          <AvatarFallback>
+                            {review.profiles?.nombre_completo?.[0] ?? "?"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-semibold">
+                              {review.profiles?.nombre_completo ?? "Comprador"}
+                            </p>
+                            <div className="flex gap-0.5">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`h-3 w-3 ${
+                                    i < review.calificacion
+                                      ? "fill-yellow-400 text-yellow-400"
+                                      : "text-muted-foreground"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          {review.comentario && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {review.comentario}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground italic">
+                  Sin reseñas aún. ¡Sé el primero en reseñar!
+                </p>
+              )}
+            </div>
           </div>
         </div>
+
+        <ReportDialog
+          open={reportDialogOpen}
+          onOpenChange={setReportDialogOpen}
+          reportType="producto"
+          objetoId={p.id}
+          objectName={p.titulo}
+        />
       </main>
     </div>
   );

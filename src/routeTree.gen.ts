@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TerminosRouteImport } from './routes/terminos'
 import { Route as PrivacidadRouteImport } from './routes/privacidad'
+import { Route as PoliticasSeguridadRouteImport } from './routes/politicas-seguridad'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -24,6 +25,8 @@ import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedMisPublicacionesRouteImport } from './routes/_authenticated/mis-publicaciones'
 import { Route as AuthenticatedChatsRouteImport } from './routes/_authenticated/chats'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as VendedorVendedorIdReseChar241asRouteImport } from './routes/vendedor.$vendedorId.reseñas'
+import { Route as AuthenticatedReseChar241aTransaccionIdRouteImport } from './routes/_authenticated/reseña.$transaccionId'
 import { Route as AuthenticatedPromocionarProductoIdRouteImport } from './routes/_authenticated/promocionar.$productoId'
 import { Route as AuthenticatedEditarIdRouteImport } from './routes/_authenticated/editar.$id'
 import { Route as AuthenticatedChatChatIdRouteImport } from './routes/_authenticated/chat.$chatId'
@@ -36,6 +39,11 @@ const TerminosRoute = TerminosRouteImport.update({
 const PrivacidadRoute = PrivacidadRouteImport.update({
   id: '/privacidad',
   path: '/privacidad',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PoliticasSeguridadRoute = PoliticasSeguridadRouteImport.update({
+  id: '/politicas-seguridad',
+  path: '/politicas-seguridad',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -103,6 +111,18 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const VendedorVendedorIdReseChar241asRoute =
+  VendedorVendedorIdReseChar241asRouteImport.update({
+    id: '/vendedor/$vendedorId/reseñas',
+    path: '/vendedor/$vendedorId/reseñas',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedReseChar241aTransaccionIdRoute =
+  AuthenticatedReseChar241aTransaccionIdRouteImport.update({
+    id: '/reseña/$transaccionId',
+    path: '/reseña/$transaccionId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPromocionarProductoIdRoute =
   AuthenticatedPromocionarProductoIdRouteImport.update({
     id: '/promocionar/$productoId',
@@ -123,6 +143,7 @@ const AuthenticatedChatChatIdRoute = AuthenticatedChatChatIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
+  '/politicas-seguridad': typeof PoliticasSeguridadRoute
   '/privacidad': typeof PrivacidadRoute
   '/terminos': typeof TerminosRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -138,10 +159,13 @@ export interface FileRoutesByFullPath {
   '/chat/$chatId': typeof AuthenticatedChatChatIdRoute
   '/editar/$id': typeof AuthenticatedEditarIdRoute
   '/promocionar/$productoId': typeof AuthenticatedPromocionarProductoIdRoute
+  '/reseña/$transaccionId': typeof AuthenticatedReseChar241aTransaccionIdRoute
+  '/vendedor/$vendedorId/reseñas': typeof VendedorVendedorIdReseChar241asRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
+  '/politicas-seguridad': typeof PoliticasSeguridadRoute
   '/privacidad': typeof PrivacidadRoute
   '/terminos': typeof TerminosRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -157,12 +181,15 @@ export interface FileRoutesByTo {
   '/chat/$chatId': typeof AuthenticatedChatChatIdRoute
   '/editar/$id': typeof AuthenticatedEditarIdRoute
   '/promocionar/$productoId': typeof AuthenticatedPromocionarProductoIdRoute
+  '/reseña/$transaccionId': typeof AuthenticatedReseChar241aTransaccionIdRoute
+  '/vendedor/$vendedorId/reseñas': typeof VendedorVendedorIdReseChar241asRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
+  '/politicas-seguridad': typeof PoliticasSeguridadRoute
   '/privacidad': typeof PrivacidadRoute
   '/terminos': typeof TerminosRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
@@ -178,12 +205,15 @@ export interface FileRoutesById {
   '/_authenticated/chat/$chatId': typeof AuthenticatedChatChatIdRoute
   '/_authenticated/editar/$id': typeof AuthenticatedEditarIdRoute
   '/_authenticated/promocionar/$productoId': typeof AuthenticatedPromocionarProductoIdRoute
+  '/_authenticated/reseña/$transaccionId': typeof AuthenticatedReseChar241aTransaccionIdRoute
+  '/vendedor/$vendedorId/reseñas': typeof VendedorVendedorIdReseChar241asRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
+    | '/politicas-seguridad'
     | '/privacidad'
     | '/terminos'
     | '/admin'
@@ -199,10 +229,13 @@ export interface FileRouteTypes {
     | '/chat/$chatId'
     | '/editar/$id'
     | '/promocionar/$productoId'
+    | '/reseña/$transaccionId'
+    | '/vendedor/$vendedorId/reseñas'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/politicas-seguridad'
     | '/privacidad'
     | '/terminos'
     | '/admin'
@@ -218,11 +251,14 @@ export interface FileRouteTypes {
     | '/chat/$chatId'
     | '/editar/$id'
     | '/promocionar/$productoId'
+    | '/reseña/$transaccionId'
+    | '/vendedor/$vendedorId/reseñas'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/politicas-seguridad'
     | '/privacidad'
     | '/terminos'
     | '/_authenticated/admin'
@@ -238,16 +274,20 @@ export interface FileRouteTypes {
     | '/_authenticated/chat/$chatId'
     | '/_authenticated/editar/$id'
     | '/_authenticated/promocionar/$productoId'
+    | '/_authenticated/reseña/$transaccionId'
+    | '/vendedor/$vendedorId/reseñas'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
+  PoliticasSeguridadRoute: typeof PoliticasSeguridadRoute
   PrivacidadRoute: typeof PrivacidadRoute
   TerminosRoute: typeof TerminosRoute
   CategoriaIdRoute: typeof CategoriaIdRoute
   ProductoIdRoute: typeof ProductoIdRoute
+  VendedorVendedorIdReseChar241asRoute: typeof VendedorVendedorIdReseChar241asRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -264,6 +304,13 @@ declare module '@tanstack/react-router' {
       path: '/privacidad'
       fullPath: '/privacidad'
       preLoaderRoute: typeof PrivacidadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/politicas-seguridad': {
+      id: '/politicas-seguridad'
+      path: '/politicas-seguridad'
+      fullPath: '/politicas-seguridad'
+      preLoaderRoute: typeof PoliticasSeguridadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -357,6 +404,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/vendedor/$vendedorId/reseñas': {
+      id: '/vendedor/$vendedorId/reseñas'
+      path: '/vendedor/$vendedorId/reseñas'
+      fullPath: '/vendedor/$vendedorId/reseñas'
+      preLoaderRoute: typeof VendedorVendedorIdReseChar241asRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/reseña/$transaccionId': {
+      id: '/_authenticated/reseña/$transaccionId'
+      path: '/reseña/$transaccionId'
+      fullPath: '/reseña/$transaccionId'
+      preLoaderRoute: typeof AuthenticatedReseChar241aTransaccionIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/promocionar/$productoId': {
       id: '/_authenticated/promocionar/$productoId'
       path: '/promocionar/$productoId'
@@ -390,6 +451,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChatChatIdRoute: typeof AuthenticatedChatChatIdRoute
   AuthenticatedEditarIdRoute: typeof AuthenticatedEditarIdRoute
   AuthenticatedPromocionarProductoIdRoute: typeof AuthenticatedPromocionarProductoIdRoute
+  AuthenticatedReseChar241aTransaccionIdRoute: typeof AuthenticatedReseChar241aTransaccionIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -402,6 +464,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEditarIdRoute: AuthenticatedEditarIdRoute,
   AuthenticatedPromocionarProductoIdRoute:
     AuthenticatedPromocionarProductoIdRoute,
+  AuthenticatedReseChar241aTransaccionIdRoute:
+    AuthenticatedReseChar241aTransaccionIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -425,10 +489,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
+  PoliticasSeguridadRoute: PoliticasSeguridadRoute,
   PrivacidadRoute: PrivacidadRoute,
   TerminosRoute: TerminosRoute,
   CategoriaIdRoute: CategoriaIdRoute,
   ProductoIdRoute: ProductoIdRoute,
+  VendedorVendedorIdReseChar241asRoute: VendedorVendedorIdReseChar241asRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

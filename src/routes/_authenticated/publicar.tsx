@@ -16,9 +16,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ImagePlus, Loader2, X } from "lucide-react";
+import { ImagePlus, Loader2, X, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { toUserMessage } from "@/lib/error-messages";
+import { validateProductTitle, validateProductDescription, getProhibitedContentMessage, containsProhibitedKeywords } from "@/lib/content-security";
 import { z } from "zod";
 
 interface Categoria {
@@ -187,6 +188,28 @@ function PublicarPage() {
       return;
     }
 
+    // SECURITY: Validate content for prohibited items
+    const titleValidation = validateProductTitle(parsed.data.titulo);
+    if (!titleValidation.valid) {
+      toast.error(titleValidation.errors[0]);
+      return;
+    }
+
+    const descValidation = validateProductDescription(parsed.data.descripcion);
+    if (!descValidation.valid) {
+      toast.error(descValidation.errors[0]);
+      return;
+    }
+
+    // SECURITY: Additional check for title + description together
+    const combinedText = `${parsed.data.titulo} ${parsed.data.descripcion}`;
+    const prohibited = containsProhibitedKeywords(combinedText);
+    if (prohibited.found) {
+      toast.error(getProhibitedContentMessage());
+      console.warn("Prohibited content detected:", prohibited);
+      return;
+    }
+
     setLoading(true);
     const uploadedPaths: string[] = [];
     for (const f of files) {
@@ -217,6 +240,7 @@ function PublicarPage() {
         estado: parsed.data.estado,
         whatsapp: parsed.data.whatsapp || null,
         imagenes: uploadedPaths,
+        estado_moderacion: "pendiente", // All new products start as pending
       })
       .select("id")
       .single();
@@ -226,7 +250,7 @@ function PublicarPage() {
       toast.error(toUserMessage(error, "No se pudo publicar el anuncio. Intenta de nuevo."));
       return;
     }
-    toast.success("¡Anuncio publicado!");
+    toast.success("¡Anuncio publicado! Está siendo revisado por nuestro equipo de moderación.");
     nav({ to: "/producto/$id", params: { id: data.id } });
   };
 

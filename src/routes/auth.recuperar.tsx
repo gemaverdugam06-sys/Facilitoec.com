@@ -12,7 +12,7 @@ import { toUserMessage } from "@/lib/error-messages";
 
 export const Route = createFileRoute("/auth/recuperar")({
   head: () => ({
-    meta: [{ title: "Recuperar contraseña — FACILITOEC" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Recuperar contraseña — WINFAST" }, { name: "robots", content: "noindex" }],
   }),
   component: RecuperarPage,
 });

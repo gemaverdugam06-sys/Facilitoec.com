@@ -31,7 +31,7 @@ export function Header() {
         <Link to="/" className="flex items-center gap-2 font-bold">
           <Logo className="h-9 w-9 drop-shadow-sm" />
           <span className="text-[1.9rem] font-black leading-none tracking-[-0.06em] text-slate-950">
-            FACILITOEC
+            WINFAST
           </span>
         </Link>
 

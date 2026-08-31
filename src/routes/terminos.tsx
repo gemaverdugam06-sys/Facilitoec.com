@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/terminos")({
   head: () => ({
-    meta: [{ title: "Términos y condiciones | FacilitoEc" }],
+    meta: [{ title: "Términos y condiciones | WINFAST" }],
   }),
   component: Terminos,
 });
@@ -24,7 +24,7 @@ function Terminos() {
 
         <article className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 shadow-2xl shadow-violet-500/5 md:p-10">
           <header className="mb-8 border-b border-slate-800 pb-6">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">FacilitoEc</p>
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-violet-300">WINFAST</p>
             <h1 className="text-3xl font-black tracking-tight text-white md:text-5xl">Términos y condiciones</h1>
           </header>
 
@@ -32,10 +32,10 @@ function Terminos() {
             <section>
               <h2 className="mb-3 text-xl font-bold text-white">1. Declaración de independencia</h2>
               <p>
-                FacilitoEc es una plataforma digital independiente y no tiene vínculo, afiliación ni relación
+                WINFAST es una plataforma digital independiente y no tiene vínculo, afiliación ni relación
                 comercial con redes de recaudación de pagos ni entidades bancarias de terceros. La operación de
                 la plataforma se realiza de forma autónoma y sin dependencia directa con procesos financieros o
-                entidades ajenas que no formen parte del ecosistema oficial de FacilitoEc.
+                entidades ajenas que no formen parte del ecosistema oficial de WINFAST.
               </p>
             </section>
 
@@ -44,7 +44,7 @@ function Terminos() {
               <p>
                 Se permite la publicación de TODO tipo de productos físicos y digitales, comercio minorista y
                 servicios profesionales, técnicos, asesorías y actividades relacionadas con la oferta y demanda
-                comercial en Ecuador. FacilitoEc funciona como catálogo visual y punto de encuentro entre
+                comercial en Ecuador. WINFAST funciona como catálogo visual y punto de encuentro entre
                 compradores y vendedores.
               </p>
             </section>
@@ -67,7 +67,7 @@ function Terminos() {
                   usuarios.
                 </li>
                 <li>
-                  FacilitoEc no cobra comisiones por las ventas entre usuarios. El único servicio de pago
+                  WINFAST no cobra comisiones por las ventas entre usuarios. El único servicio de pago
                   disponible dentro de la app es la opción opcional de destacar anuncios para obtener mayor
                   visibilidad.
                 </li>
@@ -83,9 +83,9 @@ function Terminos() {
             <section>
               <h2 className="mb-3 text-xl font-bold text-white">5. Deslinde de responsabilidad</h2>
               <p>
-                FacilitoEc actúa únicamente como un catálogo visual y punto de encuentro entre compradores y
+                WINFAST actúa únicamente como un catálogo visual y punto de encuentro entre compradores y
                 vendedores. La negociación, pago y entrega de los productos o servicios anunciados se realiza bajo
-                el exclusivo acuerdo y responsabilidad directa entre las partes. FacilitoEc no interviene en la
+                el exclusivo acuerdo y responsabilidad directa entre las partes. WINFAST no interviene en la
                 ejecución, calidad, cumplimiento ni entrega de la transacción comercial, salvo en los servicios
                 técnicos y de operación que la plataforma disponga de forma explícita.
               </p>

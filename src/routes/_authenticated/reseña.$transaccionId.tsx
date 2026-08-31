@@ -1,0 +1,258 @@
+import { createFileRoute, useParams, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
+import { Header } from "@/components/Header";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, Star, ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
+import { toUserMessage } from "@/lib/error-messages";
+
+export const Route = createFileRoute("/_authenticated/reseña/$transaccionId")({
+  component: PublicarReseñaPage,
+});
+
+function PublicarReseñaPage() {
+  const { transaccionId } = useParams({ from: "/_authenticated/reseña/$transaccionId" });
+  const { user } = useAuth();
+  const nav = useNavigate();
+
+  const [calificacion, setCalificacion] = useState<number>(5);
+  const [comentario, setComentario] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [transaccion, setTransaccion] = useState<any>(null);
+  const [vendedor, setVendedor] = useState<any>(null);
+  const [existingReview, setExistingReview] = useState<any>(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      if (!user) return;
+
+      try {
+        // Load transaction
+        const { data: tx, error: txError } = await supabase
+          .from("transacciones")
+          .select(
+            `
+            *,
+            productos:producto_id (
+              titulo,
+              user_id
+            )
+          `
+          )
+          .eq("id", transaccionId)
+          .single();
+
+        if (txError) throw txError;
+        setTransaccion(tx);
+
+        if (tx.productos) {
+          // Load vendor profile
+          const { data: vendedorData } = await supabase
+            .from("profiles")
+            .select("id, nombre_completo, avatar_url")
+            .eq("id", tx.productos.user_id)
+            .single();
+
+          setVendedor(vendedorData);
+        }
+
+        // Check if review already exists
+        const { data: existingReview } = await supabase
+          .from("reseñas_vendedores")
+          .select("*")
+          .eq("transaccion_id", transaccionId)
+          .maybeSingle();
+
+        if (existingReview) {
+          setExistingReview(existingReview);
+          setCalificacion(existingReview.calificacion);
+          setComentario(existingReview.comentario || "");
+        }
+      } catch (error) {
+        console.error("Error loading data:", error);
+        toast.error("Error al cargar datos");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user, transaccionId]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !transaccion || !vendedor) return;
+
+    if (calificacion < 1 || calificacion > 5) {
+      toast.error("La calificación debe estar entre 1 y 5");
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      if (existingReview) {
+        // Update existing review
+        const { error } = await supabase
+          .from("reseñas_vendedores")
+          .update({
+            calificacion,
+            comentario: comentario || null,
+          })
+          .eq("id", existingReview.id);
+
+        if (error) throw error;
+        toast.success("Reseña actualizada");
+      } else {
+        // Create new review
+        const { error } = await supabase
+          .from("reseñas_vendedores")
+          .insert({
+            transaccion_id: transaccionId,
+            vendedor_id: vendedor.id,
+            comprador_id: user.id,
+            calificacion,
+            comentario: comentario || null,
+            estado: "visible",
+          });
+
+        if (error) throw error;
+        toast.success("¡Reseña publicada!");
+      }
+
+      // Redirect to vendor reviews
+      nav({ to: "/vendedor/$vendedorId/reseñas", params: { vendedorId: vendedor.id } });
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      toast.error(toUserMessage(error, "Error al guardar la reseña"));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex items-center justify-center py-20 text-muted-foreground">
+          <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Cargando...
+        </div>
+      </div>
+    );
+  }
+
+  if (!transaccion || !vendedor) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto p-8 text-center">Datos no encontrados.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main className="container mx-auto max-w-2xl px-4 py-6">
+        <Button variant="ghost" size="sm" onClick={() => nav({ to: "/" })} className="mb-3">
+          <ArrowLeft className="mr-1 h-4 w-4" /> Volver
+        </Button>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {existingReview ? "Editar Reseña" : "Escribir Reseña"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="rounded-lg bg-muted p-4">
+                <p className="text-sm text-muted-foreground">Producto</p>
+                <p className="font-semibold">{transaccion.productos.titulo}</p>
+                <p className="mt-2 text-sm text-muted-foreground">Vendedor</p>
+                <p className="font-semibold">{vendedor.nombre_completo}</p>
+              </div>
+
+              <div className="space-y-3">
+                <Label>Calificación (1-5 estrellas) *</Label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setCalificacion(star)}
+                      className="transition-transform hover:scale-110"
+                    >
+                      <Star
+                        className={`h-8 w-8 ${
+                          star <= calificacion
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-muted-foreground"
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+                <p className="text-sm font-semibold text-muted-foreground">
+                  {calificacion} de 5 estrellas
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="comentario">
+                  Comentario (opcional, máximo 500 caracteres)
+                </Label>
+                <Textarea
+                  id="comentario"
+                  placeholder="Comparte tu experiencia con este vendedor..."
+                  value={comentario}
+                  onChange={(e) => setComentario(e.target.value)}
+                  maxLength={500}
+                  rows={4}
+                  className="resize-none"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {comentario.length}/500
+                </p>
+              </div>
+
+              <div className="rounded-lg bg-blue-500/10 p-3 text-sm text-blue-600">
+                <p>
+                  💡 <span className="font-semibold">Consejo:</span> Sé honesto y específico sobre tu experiencia.
+                  Esto ayuda a otros compradores a tomar decisiones informadas.
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <Button type="submit" disabled={submitting} className="flex-1">
+                  {submitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    existingReview ? "Actualizar Reseña" : "Publicar Reseña"
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => nav({ to: "/" })}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </main>
+    </div>
+  );
+}

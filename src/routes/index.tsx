@@ -28,13 +28,13 @@ interface Categoria {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "FACILITOEC — Marketplace de Ecuador" },
+      { title: "WINFAST — Marketplace de Ecuador" },
       {
         name: "description",
         content:
           "Compra, vende y promociona tus anuncios en Ecuador. Tecnología, vehículos, hogar, moda, inmuebles y más.",
       },
-      { property: "og:title", content: "FACILITOEC" },
+      { property: "og:title", content: "WINFAST" },
       {
         property: "og:description",
         content: "Marketplace de Ecuador con publicaciones destacadas.",
@@ -139,7 +139,7 @@ function Home() {
                 <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 shadow-lg">
                   <Logo className="h-8 w-8" />
                 </span>
-                <span className="font-semibold">FACILITOEC</span>
+                <span className="font-semibold">WINFAST</span>
               </div>
               <h1 className="text-5xl font-extrabold tracking-tight md:text-7xl md:leading-tight logo-heading text-white drop-shadow-lg">{t("tagline")}</h1>
               <p className="mt-6 max-w-3xl text-slate-200 text-xl md:text-2xl leading-relaxed drop-shadow-lg">

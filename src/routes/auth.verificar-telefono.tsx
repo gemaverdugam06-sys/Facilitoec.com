@@ -14,7 +14,7 @@ import { toUserMessage } from "@/lib/error-messages";
 
 export const Route = createFileRoute("/auth/verificar-telefono")({
   head: () => ({
-    meta: [{ title: "Verificar celular — FACILITOEC" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Verificar celular — WINFAST" }, { name: "robots", content: "noindex" }],
   }),
   component: VerificarTelefonoPage,
 });

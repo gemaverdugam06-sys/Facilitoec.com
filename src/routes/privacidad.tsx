@@ -3,7 +3,7 @@ import { ArrowLeft, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/privacidad")({
   head: () => ({
-    meta: [{ title: "Política de privacidad | FacilitoEc" }],
+    meta: [{ title: "Política de privacidad | WINFAST" }],
   }),
   component: Privacidad,
 });
@@ -34,7 +34,7 @@ function Privacidad() {
           <div className="space-y-7 text-base leading-8 text-slate-200">
             <section>
               <p>
-                FacilitoEc recopila los datos del usuario, como el correo electrónico y los datos de perfil, con la
+                WINFAST recopila los datos del usuario, como el correo electrónico y los datos de perfil, con la
                 finalidad exclusiva de autenticación, seguridad y gestión de la cuenta dentro de la plataforma. Este
                 tratamiento se realiza mediante tecnologías y servicios de confianza, incluyendo Supabase y Resend,
                 con la finalidad de garantizar la identidad del usuario, proteger la información y facilitar la
@@ -54,7 +54,7 @@ function Privacidad() {
             <section>
               <p>
                 El usuario conserva el control sobre su información y puede gestionar su cuenta y sus datos dentro
-                de la plataforma conforme a las políticas de seguridad y funcionalidad establecidas por FacilitoEc.
+                de la plataforma conforme a las políticas de seguridad y funcionalidad establecidas por WINFAST.
                 Cuando se requiera, la plataforma puede utilizar esos datos para confirmar la identidad, prevenir
                 abusos, proteger la integridad del sistema y'assurer la continuidad del servicio.
               </p>

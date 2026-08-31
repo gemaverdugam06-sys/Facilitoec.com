@@ -4,7 +4,7 @@ type Lang = "es" | "en";
 
 const dict = {
   es: {
-    app_name: "FACILITOEC",
+    app_name: "WINFAST",
     tagline: "Compra y vende fácil en Ecuador",
     home: "Inicio",
     publish: "Publicar",
@@ -112,7 +112,7 @@ const dict = {
     verify_account: "Verifica tu cuenta para chatear y publicar.",
   },
   en: {
-    app_name: "FACILITOEC",
+    app_name: "WINFAST",
     tagline: "Buy and sell easily in Ecuador",
     home: "Home",
     publish: "Publish",

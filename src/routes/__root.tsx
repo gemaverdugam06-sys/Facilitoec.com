@@ -131,7 +131,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { title: "FACILITOEC — Compra y vende fácil en Ecuador" },
+      { title: "WINFAST — Compra y vende fácil en Ecuador" },
     ],
     links: [
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
