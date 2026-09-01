@@ -42,6 +42,8 @@ interface Pub {
   activo: boolean;
   estado_pago?: string;
   notas_admin?: string | null;
+  estado_moderacion?: string;
+  razon_rechazo?: string | null;
 }
 
 const normalizePaymentState = (value?: string | null) =>
@@ -89,6 +91,8 @@ function MisPubs() {
           es_destacado,
           tipo_promocion,
           promocionado_hasta,
+          estado_moderacion,
+          razon_rechazo,
           transacciones (
             id,
             estado_pago,
@@ -126,6 +130,8 @@ function MisPubs() {
           promocionado_hasta: p.promocionado_hasta,
           estado_pago: estadoPago || null,
           notas_admin: latestTx?.notas_admin ?? null,
+          estado_moderacion: p.estado_moderacion || "pendiente",
+          razon_rechazo: p.razon_rechazo || null,
         };
       }) as Pub[];
 
@@ -221,6 +227,21 @@ function PubRow({ p, onDelete, onToggle }: { p: Pub; onDelete: () => void; onTog
               <Badge variant={p.activo ? "default" : "secondary"} className="text-[10px]">
                 {p.activo ? t("active") : t("inactive")}
               </Badge>
+              {p.estado_moderacion === "pendiente" && (
+                <Badge variant="outline" className="text-[10px] border-amber-300 text-amber-700 dark:border-amber-600 dark:text-amber-400 gap-1">
+                  <Clock className="h-3 w-3" /> En espera
+                </Badge>
+              )}
+              {p.estado_moderacion === "aprobado" && (
+                <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 text-[10px] gap-1 border-0">
+                  <CheckCircle2 className="h-3 w-3" /> Aprobado
+                </Badge>
+              )}
+              {p.estado_moderacion === "rechazado" && (
+                <Badge variant="destructive" className="text-[10px] gap-1">
+                  <AlertCircle className="h-3 w-3" /> Rechazado
+                </Badge>
+              )}
               {promoActiva && (
                 <Badge className="bg-gradient-featured text-warning-foreground border-0 gap-1 text-[10px]">
                   <Sparkles className="h-3 w-3" /> {p.tipo_promocion}
@@ -257,6 +278,25 @@ function PubRow({ p, onDelete, onToggle }: { p: Pub; onDelete: () => void; onTog
             </div>
           </div>
         </div>
+
+        {/* 🔔 CUADRO DE AVISO DE MODERACIÓN */}
+        {p.estado_moderacion === "pendiente" && (
+          <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 text-xs text-amber-700 dark:text-amber-400 border-t border-amber-100 dark:border-amber-900/50">
+            <Clock className="h-3.5 w-3.5 shrink-0" />
+            <span>Tu anuncio está en espera de revisión por nuestro equipo de moderación.</span>
+          </div>
+        )}
+        {p.estado_moderacion === "rechazado" && (
+          <div className="flex items-center gap-2 bg-rose-50 dark:bg-rose-950/30 px-3 py-2 text-xs text-rose-700 dark:text-rose-400 border-t border-rose-100 dark:border-rose-900/50">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+            <div className="flex-1">
+              <span className="font-semibold">Anuncio Rechazado: </span>
+              <span>
+                {p.razon_rechazo || "Infringe las políticas de seguridad. Por favor, publica otro anuncio."}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* 🔔 CUADRO DE AVISO DIRECTO DE PUBLICIDAD */}
         {estadoPago && (

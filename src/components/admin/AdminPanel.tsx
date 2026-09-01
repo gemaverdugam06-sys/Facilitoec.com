@@ -1,9 +1,18 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Loader2,
@@ -122,6 +131,10 @@ export function AdminPanel() {
   const [usuarios, setUsuarios] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState<string | null>(null);
+  const [razonesPolitica, setRazonesPolitica] = useState<Array<{ categoria: string; descripcion: string }>>([]);
+  const [showRechazarModal, setShowRechazarModal] = useState<{ productoId: string; titulo: string } | null>(null);
+  const [razonSeleccionada, setRazonSeleccionada] = useState("");
+  const [notasAdicionales, setNotasAdicionales] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -130,6 +143,7 @@ export function AdminPanel() {
       loadReportes();
       loadReseniasReportadas();
       loadUsuarios();
+      loadRazonesPolitica();
     }
   }, [user]);
 
@@ -234,6 +248,21 @@ export function AdminPanel() {
       setUsuarios(rows as UserProfile[]);
     } catch (err) {
       console.error("Error al cargar usuarios:", err);
+    }
+  };
+
+  const loadRazonesPolitica = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("politica_contenido")
+        .select("categoria, descripcion")
+        .eq("estado", true)
+        .order("categoria");
+
+      if (error) throw error;
+      setRazonesPolitica((data as unknown as Array<{ categoria: string; descripcion: string }>) ?? []);
+    } catch (err) {
+      console.error("Error al cargar razones de política:", err);
     }
   };
 
@@ -387,22 +416,32 @@ export function AdminPanel() {
     }
   };
 
-  const onRechazarProducto = async (productoId: string) => {
-    const razon = prompt("Razón del rechazo:") ?? "";
-    if (!razon.trim()) {
-      toast.error("Debes indicar una razón");
+  const onRechazarProducto = async (productoId: string, titulo: string) => {
+    setShowRechazarModal({ productoId, titulo });
+    setRazonSeleccionada("");
+    setNotasAdicionales("");
+  };
+
+  const confirmarRechazo = async () => {
+    if (!razonSeleccionada) {
+      toast.error("Debes seleccionar una razón");
       return;
     }
 
+    const productoId = showRechazarModal?.productoId;
+    if (!productoId) return;
+
     setWorking(productoId);
     try {
+      const razonCompleta = notasAdicionales ? `${razonSeleccionada} - ${notasAdicionales}` : razonSeleccionada;
       const { error } = await supabase
         .from("productos")
-        .update({ estado_moderacion: "rechazado", razon_rechazo: razon })
+        .update({ estado_moderacion: "rechazado", razon_rechazo: razonCompleta })
         .eq("id", productoId);
 
       if (error) throw error;
       toast.success("Producto rechazado");
+      setShowRechazarModal(null);
       await loadProductosPendientes();
     } catch (err) {
       console.error("Error al rechazar producto:", err);
@@ -722,7 +761,7 @@ export function AdminPanel() {
                             size="sm"
                             variant="destructive"
                             disabled={working === p.id}
-                            onClick={() => onRechazarProducto(p.id)}
+                            onClick={() => onRechazarProducto(p.id, p.titulo)}
                           >
                             <ShieldX className="mr-1 h-4 w-4" /> Rechazar
                           </Button>
@@ -935,6 +974,67 @@ export function AdminPanel() {
               )}
             </TabsContent>
           </Tabs>
+        )}
+
+        {/* Modal de Rechazo */}
+        {showRechazarModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle>Rechazar Producto: {showRechazarModal.titulo}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Razón del rechazo *</Label>
+                  <Select value={razonSeleccionada} onValueChange={setRazonSeleccionada}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona una razón..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {razonesPolitica.map((r) => (
+                        <SelectItem key={r.categoria} value={r.categoria}>
+                          {r.descripcion}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Notas adicionales (opcional)</Label>
+                  <Textarea
+                    placeholder="Agrega comentarios adicionales si lo deseas..."
+                    value={notasAdicionales}
+                    onChange={(e) => setNotasAdicionales(e.target.value)}
+                    className="resize-none"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setShowRechazarModal(null)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="flex-1"
+                    disabled={!razonSeleccionada || working === showRechazarModal.productoId}
+                    onClick={confirmarRechazo}
+                  >
+                    {working === showRechazarModal.productoId ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Rechazar Producto"
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )}
       </main>
     </div>
