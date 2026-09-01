@@ -171,8 +171,7 @@ export function AdminPanel() {
           profiles (nombre_completo)
         `,
         )
-        .eq("estado_moderacion", "pendiente")
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setProductosPendientes((data as unknown as ProductoPendiente[]) ?? []);
