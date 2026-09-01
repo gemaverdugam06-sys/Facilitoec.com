@@ -9,8 +9,8 @@ ALTER TABLE public.productos ADD COLUMN IF NOT EXISTS
 ALTER TABLE public.productos ADD COLUMN IF NOT EXISTS 
   razon_rechazo TEXT;
 
--- 2. Create reseñas_vendedores table (Seller reviews)
-CREATE TABLE IF NOT EXISTS public.reseñas_vendedores (
+-- 2. Create resenas_vendedores table (Seller reviews)
+CREATE TABLE IF NOT EXISTS public.resenas_vendedores (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vendedor_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   comprador_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -22,12 +22,12 @@ CREATE TABLE IF NOT EXISTS public.reseñas_vendedores (
   updated_at TIMESTAMP DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS reseñas_vendedores_vendedor_id 
-  ON public.reseñas_vendedores(vendedor_id);
-CREATE INDEX IF NOT EXISTS reseñas_vendedores_comprador_id 
-  ON public.reseñas_vendedores(comprador_id);
-CREATE INDEX IF NOT EXISTS reseñas_vendedores_estado 
-  ON public.reseñas_vendedores(estado);
+CREATE INDEX IF NOT EXISTS resenas_vendedores_vendedor_id 
+  ON public.resenas_vendedores(vendedor_id);
+CREATE INDEX IF NOT EXISTS resenas_vendedores_comprador_id 
+  ON public.resenas_vendedores(comprador_id);
+CREATE INDEX IF NOT EXISTS resenas_vendedores_estado 
+  ON public.resenas_vendedores(estado);
 
 -- 3. Create perfil_vendedor view with calculated ratings
 CREATE OR REPLACE VIEW public.perfil_vendedor_stats AS
@@ -36,18 +36,18 @@ SELECT
   p.nombre_completo,
   p.avatar_url,
   p.ciudad,
-  COUNT(DISTINCT r.id) as total_reseñas,
+  COUNT(DISTINCT r.id) as total_resenas,
   COALESCE(ROUND(AVG(r.calificacion)::numeric, 1), 0) as promedio_calificacion,
-  COALESCE(MAX(r.updated_at), p.created_at) as ultima_actividad
+  COALESCE(MAX(r.updated_at), now()) as ultima_actividad
 FROM public.profiles p
-LEFT JOIN public.reseñas_vendedores r ON r.vendedor_id = p.id AND r.estado = 'visible'
+LEFT JOIN public.resenas_vendedores r ON r.vendedor_id = p.id AND r.estado = 'visible'
 GROUP BY p.id, p.nombre_completo, p.avatar_url, p.ciudad;
 
 -- 4. Create reportes table (for content, users, reviews)
 CREATE TABLE IF NOT EXISTS public.reportes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   reportero_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  tipo VARCHAR NOT NULL CHECK (tipo IN ('producto', 'usuario', 'reseña')),
+  tipo VARCHAR NOT NULL CHECK (tipo IN ('producto', 'usuario', 'resena')),
   objeto_id UUID NOT NULL, -- producto_id, user_id, or reseña_id
   razon VARCHAR NOT NULL CHECK (razon IN (
     'drogas',
@@ -96,7 +96,7 @@ INSERT INTO public.politica_contenido (categoria, descripcion, ejemplos) VALUES
   ('contenido_sexual_menores', 'Material sexual que involucre menores', 'Cualquier explotación infantil')
 ON CONFLICT (categoria) DO NOTHING;
 
--- 6. Guard function: Prevent non-admin users from modifying produto moderation fields
+-- 6. Guard function: Prevent non-admin users from modifying product moderation fields
 CREATE OR REPLACE FUNCTION public.guard_producto_moderation()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -136,7 +136,7 @@ CREATE TRIGGER productos_guard_moderation_upd
   FOR EACH ROW EXECUTE FUNCTION public.guard_producto_moderation();
 
 -- 7. Guard function: Only users in a transaction can review each other
-CREATE OR REPLACE FUNCTION public.guard_reseña_insert()
+CREATE OR REPLACE FUNCTION public.guard_resena_insert()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -154,13 +154,13 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS reseñas_vendedores_guard_insert ON public.reseñas_vendedores;
-CREATE TRIGGER reseñas_vendedores_guard_insert
-  BEFORE INSERT ON public.reseñas_vendedores
-  FOR EACH ROW EXECUTE FUNCTION public.guard_reseña_insert();
+DROP TRIGGER IF EXISTS resenas_vendedores_guard_insert ON public.resenas_vendedores;
+CREATE TRIGGER resenas_vendedores_guard_insert
+  BEFORE INSERT ON public.resenas_vendedores
+  FOR EACH ROW EXECUTE FUNCTION public.guard_resena_insert();
 
 -- 8. Update function: Auto-update moderation timestamp
-CREATE OR REPLACE FUNCTION public.update_reseña_timestamp()
+CREATE OR REPLACE FUNCTION public.update_resena_timestamp()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
@@ -170,21 +170,21 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS reseñas_vendedores_update_timestamp ON public.reseñas_vendedores;
-CREATE TRIGGER reseñas_vendedores_update_timestamp
-  BEFORE UPDATE ON public.reseñas_vendedores
-  FOR EACH ROW EXECUTE FUNCTION public.update_reseña_timestamp();
+DROP TRIGGER IF EXISTS resenas_vendedores_update_timestamp ON public.resenas_vendedores;
+CREATE TRIGGER resenas_vendedores_update_timestamp
+  BEFORE UPDATE ON public.resenas_vendedores
+  FOR EACH ROW EXECUTE FUNCTION public.update_resena_timestamp();
 
 -- 9. Grant permissions for authenticated users to read reviews and policy
-GRANT SELECT ON public.reseñas_vendedores TO authenticated;
+GRANT SELECT ON public.resenas_vendedores TO authenticated;
 GRANT SELECT ON public.perfil_vendedor_stats TO authenticated, anon;
 GRANT SELECT ON public.politica_contenido TO authenticated, anon;
 
 -- 10. Allow users to insert their own reviews (no update/delete without admin)
-CREATE POLICY "Users can insert their own reviews" ON public.reseñas_vendedores
+CREATE POLICY "Users can insert their own reviews" ON public.resenas_vendedores
   FOR INSERT WITH CHECK (auth.uid() = comprador_id);
 
-CREATE POLICY "Reviews are visible" ON public.reseñas_vendedores
+CREATE POLICY "Reviews are visible" ON public.resenas_vendedores
   FOR SELECT USING (estado IN ('visible', 'reportado'));
 
 -- 11. Allow admins to manage reportes
