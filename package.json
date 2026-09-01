@@ -10,7 +10,11 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview --host 0.0.0.0 --port 4173",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -70,6 +74,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
+    "@playwright/test": "^1.62.1",
     "@types/node": "^22.16.5",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
@@ -89,6 +94,10 @@
     "framer-motion": {
       "react": "$react",
       "react-dom": "$react-dom"
-    }
+    },
+    "esbuild": "^0.28.1",
+    "postcss": "^8.5.26",
+    "js-yaml": "^4.3.1",
+    "nanoid": "^3.3.18"
   }
 }
