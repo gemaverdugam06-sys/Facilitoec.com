@@ -17,6 +17,7 @@ export type ReportReason =
   | "otro";
 
 export interface ReportInput {
+  reportero_id: string;
   tipo: ReportType;
   objeto_id: string;
   razon: ReportReason;
@@ -35,6 +36,7 @@ export async function submitReport(
     const { data, error } = await supabase
       .from("reportes")
       .insert({
+        reportero_id: report.reportero_id,
         tipo: report.tipo,
         objeto_id: report.objeto_id,
         razon: report.razon,

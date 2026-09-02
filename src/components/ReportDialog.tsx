@@ -51,6 +51,7 @@ export function ReportDialog({
 
     setLoading(true);
     const result = await submitReport(supabase, {
+      reportero_id: user.id,
       tipo: reportType,
       objeto_id: objetoId,
       razon,
