@@ -13,12 +13,14 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useUnreadChats } from "@/hooks/use-unread";
+import { useAdminNotifications } from "@/hooks/use-admin-notifications";
 
 export function Header() {
   const { user, signOut, isAdmin, roleLoading } = useAuth();
   const { t, lang, setLang } = useI18n();
   const navigate = useNavigate();
   const { total: unread } = useUnreadChats();
+  const { pendingProducts } = useAdminNotifications();
 
   return (
     <motion.header
@@ -59,6 +61,23 @@ export function Header() {
                   )}
                 </Link>
               </Button>
+
+              {!roleLoading && isAdmin && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative"
+                  aria-label="Notificaciones de administración"
+                  onClick={() => navigate({ to: "/admin" })}
+                >
+                  <ShieldCheck className="h-5 w-5" />
+                  {pendingProducts > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                      {pendingProducts > 99 ? "99+" : pendingProducts}
+                    </span>
+                  )}
+                </Button>
+              )}
 
               <motion.div whileHover={{ scale: 1.02 }} className="will-change-transform">
                 <Button asChild className="btn-cta hover:opacity-95">

@@ -23,12 +23,15 @@ import {
   Trash2,
   AlertCircle,
   Flag,
+  ImageOff,
+  MapPin,
   Star,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { promoEndDate } from "@/lib/promo-plans";
 import { reportReasons } from "@/lib/reporting";
+import { useSignedUrls } from "@/lib/storage";
 
 interface Tx {
   id: string;
@@ -49,10 +52,16 @@ interface ProductoPendiente {
   id: string;
   titulo: string;
   descripcion: string;
+  precio: number;
+  moneda: string;
+  ciudad: string;
+  imagenes: string[];
+  categoria_id: string;
   estado_moderacion: string;
   razon_rechazo: string | null;
   created_at: string;
-  profiles: { nombre_completo: string | null } | null;
+  categorias: { nombre: string } | null;
+  profiles: { nombre_completo: string | null; ciudad: string | null } | null;
 }
 
 interface Reporte {
@@ -122,6 +131,127 @@ const isRejectedState = (value?: string | null) => {
 
 const isHistoryState = (value?: string | null) => isCompletedState(value) || isRejectedState(value);
 
+function ProductoModerationCard({
+  producto,
+  working,
+  onAprobar,
+  onRechazar,
+  onEliminar,
+}: {
+  producto: ProductoPendiente;
+  working: boolean;
+  onAprobar: () => void;
+  onRechazar: () => void;
+  onEliminar: () => void;
+}) {
+  const imageUrls = useSignedUrls("productos", producto.imagenes);
+  const location = producto.ciudad || producto.profiles?.ciudad;
+
+  return (
+    <Card>
+      <CardContent className="space-y-4 p-4">
+        <div className="grid gap-4 md:grid-cols-[220px_1fr]">
+          <div className="grid grid-cols-3 gap-2 md:grid-cols-2">
+            <div className="col-span-3 aspect-square overflow-hidden rounded-lg bg-muted md:col-span-2">
+              {imageUrls[0] ? (
+                <img
+                  src={imageUrls[0]}
+                  alt={producto.titulo}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center text-muted-foreground">
+                  <ImageOff className="h-10 w-10" />
+                </div>
+              )}
+            </div>
+            {imageUrls.slice(1).map((url, index) => (
+              <img
+                key={`${url}-${index}`}
+                src={url}
+                alt={`${producto.titulo} ${index + 2}`}
+                className="aspect-square w-full rounded-md object-cover"
+              />
+            ))}
+          </div>
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-start gap-2">
+              <h3 className="min-w-0 flex-1 text-lg font-bold">{producto.titulo}</h3>
+              <Badge variant="outline">{producto.estado_moderacion.toUpperCase()}</Badge>
+            </div>
+            <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+              {producto.descripcion}
+            </p>
+            <dl className="grid gap-x-4 gap-y-1 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-muted-foreground">Precio</dt>
+                <dd className="font-semibold">
+                  {producto.moneda}{" "}
+                  {Number(producto.precio).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Categoría</dt>
+                <dd>{producto.categorias?.nombre ?? producto.categoria_id}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Vendedor</dt>
+                <dd>{producto.profiles?.nombre_completo ?? "Usuario"}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Ubicación</dt>
+                <dd className="flex items-center gap-1">
+                  {location ? (
+                    <>
+                      <MapPin className="h-3 w-3" />
+                      {location}
+                    </>
+                  ) : (
+                    "No indicada"
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Fecha de publicación</dt>
+                <dd>{new Date(producto.created_at).toLocaleString()}</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2 border-t pt-3">
+          <Button
+            className="bg-success text-success-foreground hover:bg-success/90"
+            disabled={working}
+            onClick={onAprobar}
+          >
+            {working ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <ShieldCheck className="mr-1 h-4 w-4" />
+                Aprobar
+              </>
+            )}
+          </Button>
+          <Button variant="destructive" disabled={working} onClick={onRechazar}>
+            <ShieldX className="mr-1 h-4 w-4" />
+            Rechazar
+          </Button>
+          <Button
+            variant="outline"
+            className="text-destructive hover:text-destructive"
+            disabled={working}
+            onClick={onEliminar}
+          >
+            <Trash2 className="mr-1 h-4 w-4" />
+            Eliminar
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function AdminPanel() {
   const { user } = useAuth();
   const [txs, setTxs] = useState<Tx[]>([]);
@@ -131,8 +261,13 @@ export function AdminPanel() {
   const [usuarios, setUsuarios] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState<string | null>(null);
-  const [razonesPolitica, setRazonesPolitica] = useState<Array<{ categoria: string; descripcion: string }>>([]);
-  const [showRechazarModal, setShowRechazarModal] = useState<{ productoId: string; titulo: string } | null>(null);
+  const [razonesPolitica, setRazonesPolitica] = useState<
+    Array<{ categoria: string; descripcion: string }>
+  >([]);
+  const [showRechazarModal, setShowRechazarModal] = useState<{
+    productoId: string;
+    titulo: string;
+  } | null>(null);
   const [razonSeleccionada, setRazonSeleccionada] = useState("");
   const [notasAdicionales, setNotasAdicionales] = useState("");
 
@@ -179,12 +314,19 @@ export function AdminPanel() {
           id,
           titulo,
           descripcion,
+          precio,
+          moneda,
+          ciudad,
+          imagenes,
+          categoria_id,
           estado_moderacion,
           razon_rechazo,
           created_at,
-          profiles (nombre_completo)
+          categorias (nombre),
+          profiles (nombre_completo, ciudad)
         `,
         )
+        .eq("estado_moderacion", "pendiente")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -260,7 +402,9 @@ export function AdminPanel() {
         .order("categoria");
 
       if (error) throw error;
-      setRazonesPolitica((data as unknown as Array<{ categoria: string; descripcion: string }>) ?? []);
+      setRazonesPolitica(
+        (data as unknown as Array<{ categoria: string; descripcion: string }>) ?? [],
+      );
     } catch (err) {
       console.error("Error al cargar razones de política:", err);
     }
@@ -433,7 +577,9 @@ export function AdminPanel() {
 
     setWorking(productoId);
     try {
-      const razonCompleta = notasAdicionales ? `${razonSeleccionada} - ${notasAdicionales}` : razonSeleccionada;
+      const razonCompleta = notasAdicionales
+        ? `${razonSeleccionada} - ${notasAdicionales}`
+        : razonSeleccionada;
       const { error } = await supabase
         .from("productos")
         .update({ estado_moderacion: "rechazado", razon_rechazo: razonCompleta })
@@ -727,56 +873,14 @@ export function AdminPanel() {
               ) : (
                 <div className="space-y-3">
                   {productosPendientes.map((p) => (
-                    <Card key={p.id}>
-                      <CardContent className="space-y-2 p-4">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge variant="outline">{p.estado_moderacion}</Badge>
-                          <span className="font-bold flex-1">{p.titulo}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(p.created_at).toLocaleString()}
-                          </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {p.descripcion?.substring(0, 100)}...
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Por: {p.profiles?.nombre_completo ?? "Usuario"}
-                        </p>
-                        <div className="flex gap-2 pt-2">
-                          <Button
-                            size="sm"
-                            className="bg-success text-success-foreground hover:bg-success/90"
-                            disabled={working === p.id}
-                            onClick={() => onAprobarProducto(p.id)}
-                          >
-                            {working === p.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <>
-                                <ShieldCheck className="mr-1 h-4 w-4" /> Aprobar
-                              </>
-                            )}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            disabled={working === p.id}
-                            onClick={() => onRechazarProducto(p.id, p.titulo)}
-                          >
-                            <ShieldX className="mr-1 h-4 w-4" /> Rechazar
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-destructive hover:text-destructive"
-                            disabled={working === p.id}
-                            onClick={() => onEliminarProducto(p.id, p.titulo)}
-                          >
-                            <Trash2 className="mr-1 h-4 w-4" /> Eliminar
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <ProductoModerationCard
+                      key={p.id}
+                      producto={p}
+                      working={working === p.id}
+                      onAprobar={() => onAprobarProducto(p.id)}
+                      onRechazar={() => onRechazarProducto(p.id, p.titulo)}
+                      onEliminar={() => onEliminarProducto(p.id, p.titulo)}
+                    />
                   ))}
                 </div>
               )}

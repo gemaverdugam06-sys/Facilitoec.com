@@ -78,6 +78,8 @@ function ProductoPage() {
           .from("productos")
           .select("*, profiles!productos_user_profile_fk(nombre_completo, avatar_url, ciudad)")
           .eq("id", id)
+          .eq("activo", true)
+          .eq("estado_moderacion", "aprobado")
           .maybeSingle();
 
         if (!active) return;

@@ -67,6 +67,7 @@ function CategoriaPage() {
         .from("productos")
         .select("id, titulo, precio, moneda, ciudad, imagenes, es_destacado, promocionado_hasta")
         .eq("activo", true)
+        .eq("estado_moderacion", "aprobado")
         .eq("categoria_id", id)
         .order("es_destacado", { ascending: false })
         .order("created_at", { ascending: false })

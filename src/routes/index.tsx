@@ -98,6 +98,7 @@ function Home() {
         .from("productos")
         .select("id, titulo, precio, moneda, ciudad, imagenes, es_destacado, promocionado_hasta")
         .eq("activo", true)
+        .eq("estado_moderacion", "aprobado")
         .order("es_destacado", { ascending: false })
         .order("created_at", { ascending: false })
         .limit(60);

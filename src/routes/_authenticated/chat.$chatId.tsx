@@ -17,6 +17,7 @@ interface Mensaje {
   remitente_id: string;
   contenido: string;
   created_at: string;
+  nombre_remitente: string | null;
 }
 interface ChatInfo {
   id: string;
@@ -49,9 +50,29 @@ function ChatPage() {
       .eq("chat_id", chatId)
       .order("created_at", { ascending: true });
 
-    if (data) {
-      setMensajes(data as Mensaje[]);
+    if (!data) return;
+
+    const mensajesBase = data as unknown as Array<Omit<Mensaje, "nombre_remitente">>;
+    const remitenteIds = [...new Set(mensajesBase.map((mensaje) => mensaje.remitente_id))];
+    const nombres = new Map<string, string>();
+
+    if (remitenteIds.length > 0) {
+      const { data: perfiles } = await supabase
+        .from("profiles")
+        .select("id, nombre_completo")
+        .in("id", remitenteIds);
+
+      for (const perfil of perfiles ?? []) {
+        if (perfil.nombre_completo) nombres.set(perfil.id, perfil.nombre_completo);
+      }
     }
+
+    setMensajes(
+      mensajesBase.map((mensaje) => ({
+        ...mensaje,
+        nombre_remitente: nombres.get(mensaje.remitente_id) ?? null,
+      })),
+    );
   };
 
   useEffect(() => {
@@ -178,6 +199,9 @@ function ChatPage() {
                   <div
                     className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-muted"}`}
                   >
+                    <p className="mb-1 text-xs font-semibold opacity-80">
+                      {m.nombre_remitente ?? "Usuario"}
+                    </p>
                     {m.contenido}
                   </div>
                 </div>
