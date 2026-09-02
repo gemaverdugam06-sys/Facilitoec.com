@@ -20,6 +20,7 @@ import {
   Loader2,
   Star,
   Flag,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { toUserMessage } from "@/lib/error-messages";
@@ -59,7 +60,7 @@ export const Route = createFileRoute("/producto/$id")({
 function ProductoPage() {
   const { id } = Route.useParams();
   const { t } = useI18n();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const nav = useNavigate();
   const [p, setP] = useState<Producto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -67,8 +68,26 @@ function ProductoPage() {
   const [vendorStats, setVendorStats] = useState<VendorStats | null>(null);
   const [recentReviews, setRecentReviews] = useState<any[]>([]);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const images = useSignedUrls("productos", p?.imagenes ?? []);
   const vendorAvatarUrl = useSignedUrl("avatars", p?.profiles?.avatar_url);
+
+  const eliminarProducto = async () => {
+    if (!p || !user || (!isAdmin && p.user_id !== user.id) || deleting) return;
+    if (!window.confirm(`¿Deseas eliminar permanentemente la publicación "${p.titulo}"?`)) return;
+
+    setDeleting(true);
+    const { error } = await supabase.from("productos").delete().eq("id", p.id);
+    setDeleting(false);
+
+    if (error) {
+      toast.error(toUserMessage(error, "No se pudo eliminar la publicación."));
+      return;
+    }
+
+    toast.success("Publicación eliminada");
+    nav({ to: "/" });
+  };
   useEffect(() => {
     let active = true;
 
@@ -334,6 +353,23 @@ function ProductoPage() {
               >
                 <Flag className="h-4 w-4" />
               </Button>
+              {(user?.id === p.user_id || isAdmin) && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={eliminarProducto}
+                  disabled={deleting}
+                  className="text-muted-foreground hover:text-destructive"
+                  title="Eliminar publicación"
+                  aria-label="Eliminar publicación"
+                >
+                  {deleting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                </Button>
+              )}
             </div>
             {(!user || !isVerified) && (
               <p className="text-xs text-muted-foreground">
