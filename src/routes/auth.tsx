@@ -48,6 +48,7 @@ function AuthPage() {
   const [phoneSignupName, setPhoneSignupName] = useState("");
 
   const [loading, setLoading] = useState(false);
+  const [signupMessage, setSignupMessage] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -121,13 +122,32 @@ function AuthPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (name.trim().length < 2) return toast.error(t("name_required"));
-    if (password.length < 8) return toast.error(t("password_min_8"));
-    if (password !== confirmPassword) return toast.error(t("passwords_mismatch"));
+    setSignupMessage(null);
+
+    const normalizedEmail = email.trim().toLowerCase();
+    if (name.trim().length < 2) {
+      const message = t("name_required");
+      setSignupMessage(message);
+      return toast.error(message);
+    }
+    if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      const message = "Ingresa un correo electrónico válido.";
+      setSignupMessage(message);
+      return toast.error(message);
+    }
+    if (password.length < 8) {
+      const message = t("password_min_8");
+      setSignupMessage(message);
+      return toast.error(message);
+    }
+    if (password !== confirmPassword) {
+      const message = t("passwords_mismatch");
+      setSignupMessage(message);
+      return toast.error(message);
+    }
 
     await runWithLoadingGuard(async () => {
       try {
-        const normalizedEmail = email.trim().toLowerCase();
         const signupRateLimitResult = await checkRateLimit({
           key: `signup:${normalizedEmail}`,
           limit: 3,
@@ -137,18 +157,22 @@ function AuthPage() {
         if (!signupRateLimitResult.success) {
           const seconds = Math.ceil((signupRateLimitResult.resetIn || 0) / 1000);
           const minutes = Math.ceil(seconds / 60);
-          toast.error(`Demasiados intentos. Intenta de nuevo en ${minutes} minuto(s).`);
+          const message = `Demasiados intentos. Intenta de nuevo en ${minutes} minuto(s).`;
+          setSignupMessage(message);
+          toast.error(message);
           return;
         }
 
         const phone = phoneRaw.trim() ? toE164Phone(phoneRaw) : null;
         if (phoneRaw.trim() && !phone) {
-          toast.error(t("invalid_phone"));
+          const message = t("invalid_phone");
+          setSignupMessage(message);
+          toast.error(message);
           return;
         }
 
         const { data, error } = await supabase.auth.signUp({
-          email: email.trim(),
+          email: normalizedEmail,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
@@ -157,14 +181,18 @@ function AuthPage() {
         });
 
         if (error) {
-          toast.error(toUserMessage(error, "No se pudo crear la cuenta."));
+          const message = toUserMessage(error, "No se pudo crear la cuenta. Intenta de nuevo.");
+          setSignupMessage(message);
+          toast.error(message);
           return;
         }
 
         if (data.session && phone) {
           const linkErr = await linkPhoneToAccount(phone);
           if (linkErr.error) {
-            toast.error(toUserMessage(linkErr.error, "No se pudo vincular el teléfono."));
+            const message = toUserMessage(linkErr.error, "No se pudo vincular el teléfono.");
+            setSignupMessage(message);
+            toast.error(message);
             return;
           }
           toast.success(t("otp_sent"));
@@ -172,11 +200,18 @@ function AuthPage() {
           return;
         }
 
-        toast.success(data.session ? t("welcome_back") : t("signup_check_email_then_phone"));
+        const message = data.session ? t("welcome_back") : t("signup_check_email_then_phone");
+        setSignupMessage(message);
+        toast.success(message);
         nav({ to: data.session ? "/" : "/auth", replace: true });
       } catch (error) {
         console.error("Error al crear la cuenta:", error);
-        toast.error("No se pudo crear la cuenta. Revisa tu conexión e inténtalo otra vez.");
+        const message = toUserMessage(
+          error,
+          "No se pudo crear la cuenta. Revisa tu conexión e inténtalo otra vez.",
+        );
+        setSignupMessage(message);
+        toast.error(message);
       }
     });
   };
@@ -317,7 +352,7 @@ function AuthPage() {
             </TabsContent>
 
             <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-3 pt-3">
+              <form onSubmit={handleSignUp} noValidate className="space-y-3 pt-3">
                 <div className="space-y-2">
                   <Label htmlFor="name-up">{t("full_name")}</Label>
                   <Input
@@ -411,8 +446,22 @@ function AuthPage() {
                   disabled={loading}
                   className="w-full rounded-2xl border border-primary/80 bg-gradient-primary/95 text-white shadow-lg shadow-primary/10 hover:bg-gradient-primary"
                 >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("sign_up")}
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Creando cuenta...
+                    </>
+                  ) : (
+                    t("sign_up")
+                  )}
                 </Button>
+                <p
+                  role="status"
+                  aria-live="polite"
+                  className="min-h-5 text-center text-xs text-slate-300"
+                >
+                  {signupMessage}
+                </p>
               </form>
             </TabsContent>
           </Tabs>
