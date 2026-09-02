@@ -203,7 +203,15 @@ function AuthPage() {
         const message = data.session ? t("welcome_back") : t("signup_check_email_then_phone");
         setSignupMessage(message);
         toast.success(message);
-        nav({ to: data.session ? "/" : "/auth", replace: true });
+        if (data.session) {
+          nav({ to: "/", replace: true });
+          return;
+        }
+
+        setEmailTab("signin");
+        setPassword("");
+        setConfirmPassword("");
+        nav({ to: "/auth", replace: true });
       } catch (error) {
         console.error("Error al crear la cuenta:", error);
         const message = toUserMessage(
