@@ -2,24 +2,25 @@ import { Page, BrowserContext } from '@playwright/test';
 
 /**
  * Test account credentials
- * These are placeholder values for staging/test Supabase instance
+ * These MUST match the users created in Supabase staging instance
+ * Create these users in Supabase Auth before running tests
  */
 export const TEST_USERS = {
   adminUser: {
-    email: 'admin@test-winfast.local',
-    password: 'TestAdmin123!@#'
+    email: 'admin-test@staging.local',
+    password: 'Admin@Staging2026!'
   },
   normalUser1: {
-    email: 'user1@test-winfast.local',
-    password: 'TestUser123!@#'
+    email: 'user-test@staging.local',
+    password: 'User@Staging2026!'
   },
   normalUser2: {
-    email: 'user2@test-winfast.local',
-    password: 'TestUser456!@#'
+    email: 'user2-test@staging.local',
+    password: 'User2@Staging2026!'
   },
   blockedUser: {
-    email: 'blocked@test-winfast.local',
-    password: 'TestBlocked123!@#'
+    email: 'blocked-test@staging.local',
+    password: 'Blocked@Staging2026!'
   }
 };
 

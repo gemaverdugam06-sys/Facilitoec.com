@@ -1,0 +1,59 @@
+VERCEL - COPIAR Y PEGAR TODO
+
+========================================
+VARIABLE 1
+========================================
+Key:    VITE_SUPABASE_URL
+Value:  https://CAMBIAR_AQUI.supabase.co
+Env:    Production ✓ Preview ✓
+
+========================================
+VARIABLE 2
+========================================
+Key:    VITE_SUPABASE_PUBLISHABLE_KEY
+Value:  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.CAMBIAR_AQUI.CAMBIAR_AQUI
+Env:    Production ✓ Preview ✓
+
+========================================
+VARIABLE 3
+========================================
+Key:    VITE_SUPABASE_ANON_KEY
+Value:  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.CAMBIAR_AQUI.CAMBIAR_AQUI
+Env:    Production ✓ Preview ✓
+
+========================================
+VARIABLE 4
+========================================
+Key:    SUPABASE_URL
+Value:  https://CAMBIAR_AQUI.supabase.co
+Env:    Production ✓ (SOLO Production)
+
+========================================
+VARIABLE 5
+========================================
+Key:    SUPABASE_SERVICE_ROLE_KEY
+Value:  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.CAMBIAR_AQUI.CAMBIAR_AQUI
+Env:    Production ✓ (SOLO Production)
+
+========================================
+
+¿QUÉ CAMBIAR?
+
+1. https://CAMBIAR_AQUI.supabase.co
+   ← Busca en Supabase > Settings > API > Project URL
+
+2. eyJhbGc...CAMBIAR_AQUI (en Variables 2 y 3 - mismo valor)
+   ← Busca en Supabase > Settings > API > Anon public key
+
+3. eyJhbGc...CAMBIAR_AQUI (en Variable 5 - diferente valor)
+   ← Busca en Supabase > Settings > API > Service role secret
+
+========================================
+DESPUÉS:
+========================================
+1. Deployments
+2. Último deployment
+3. Click en "..."
+4. Click "Redeploy"
+5. Espera ✅ Ready
+6. Prueba login en tu URL staging
