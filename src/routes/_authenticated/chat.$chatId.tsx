@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, Send, Loader2 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { toUserMessage } from "@/lib/error-messages";
+import { useSignedUrls } from "@/lib/storage";
 import { toast } from "sonner";
 
 interface Mensaje {
@@ -49,6 +50,13 @@ function ChatPage() {
   const [loading, setLoading] = useState(true);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const avatarPaths = [
+    ...new Set(mensajes.map((mensaje) => mensaje.avatar_remitente).filter(Boolean)),
+  ];
+  const avatarUrls = useSignedUrls("avatars", avatarPaths);
+  const avatarUrlByPath = new Map(
+    avatarPaths.map((path, index) => [path, avatarUrls[index] ?? ""]),
+  );
 
   // Función dedicada a traer los mensajes actualizados de la base de datos
   const refrescarMensajes = async () => {
@@ -297,7 +305,13 @@ function ChatPage() {
                 >
                   {!mine && (
                     <Avatar className="h-8 w-8 shrink-0">
-                      <AvatarImage src={m.avatar_remitente ?? undefined} />
+                      <AvatarImage
+                        src={
+                          m.avatar_remitente
+                            ? avatarUrlByPath.get(m.avatar_remitente) || undefined
+                            : undefined
+                        }
+                      />
                       <AvatarFallback>{m.nombre_remitente?.[0] ?? "U"}</AvatarFallback>
                     </Avatar>
                   )}
@@ -374,7 +388,13 @@ function ChatPage() {
                   </div>
                   {mine && (
                     <Avatar className="h-8 w-8 shrink-0">
-                      <AvatarImage src={m.avatar_remitente ?? undefined} />
+                      <AvatarImage
+                        src={
+                          m.avatar_remitente
+                            ? avatarUrlByPath.get(m.avatar_remitente) || undefined
+                            : undefined
+                        }
+                      />
                       <AvatarFallback>{m.nombre_remitente?.[0] ?? "U"}</AvatarFallback>
                     </Avatar>
                   )}
