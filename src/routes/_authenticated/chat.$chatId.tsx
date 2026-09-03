@@ -6,6 +6,7 @@ import { useI18n } from "@/lib/i18n";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, Send, Loader2 } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { toUserMessage } from "@/lib/error-messages";
@@ -22,6 +23,7 @@ interface Mensaje {
   editado_en: string | null;
   estado_envio: string;
   read_at: string | null;
+  avatar_remitente: string | null;
   nombre_remitente: string | null;
 }
 interface ChatInfo {
@@ -62,23 +64,27 @@ function ChatPage() {
 
     const mensajesBase = data as unknown as Array<Omit<Mensaje, "nombre_remitente">>;
     const remitenteIds = [...new Set(mensajesBase.map((mensaje) => mensaje.remitente_id))];
-    const nombres = new Map<string, string>();
+    const perfilesMap = new Map<string, { nombre: string | null; avatar: string | null }>();
 
     if (remitenteIds.length > 0) {
       const { data: perfiles } = await supabase
         .from("profiles")
-        .select("id, nombre_completo")
+        .select("id, nombre_completo, avatar_url")
         .in("id", remitenteIds);
 
       for (const perfil of perfiles ?? []) {
-        if (perfil.nombre_completo) nombres.set(perfil.id, perfil.nombre_completo);
+        perfilesMap.set(perfil.id, {
+          nombre: perfil.nombre_completo,
+          avatar: perfil.avatar_url,
+        });
       }
     }
 
     setMensajes(
       mensajesBase.map((mensaje) => ({
         ...mensaje,
-        nombre_remitente: nombres.get(mensaje.remitente_id) ?? null,
+        nombre_remitente: perfilesMap.get(mensaje.remitente_id)?.nombre ?? null,
+        avatar_remitente: perfilesMap.get(mensaje.remitente_id)?.avatar ?? null,
       })),
     );
   };
@@ -285,7 +291,16 @@ function ChatPage() {
               const editable = mine && canEditMessage(m.created_at);
               const statusIcon = mine ? (m.read_at ? "✓✓" : m.delivered_at ? "✓✓" : "✓") : null;
               return (
-                <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                <div
+                  key={m.id}
+                  className={`flex items-end gap-2 ${mine ? "justify-end" : "justify-start"}`}
+                >
+                  {!mine && (
+                    <Avatar className="h-8 w-8 shrink-0">
+                      <AvatarImage src={m.avatar_remitente ?? undefined} />
+                      <AvatarFallback>{m.nombre_remitente?.[0] ?? "U"}</AvatarFallback>
+                    </Avatar>
+                  )}
                   <div
                     className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-muted"}`}
                   >
@@ -357,6 +372,12 @@ function ChatPage() {
                       </div>
                     )}
                   </div>
+                  {mine && (
+                    <Avatar className="h-8 w-8 shrink-0">
+                      <AvatarImage src={m.avatar_remitente ?? undefined} />
+                      <AvatarFallback>{m.nombre_remitente?.[0] ?? "U"}</AvatarFallback>
+                    </Avatar>
+                  )}
                 </div>
               );
             })
