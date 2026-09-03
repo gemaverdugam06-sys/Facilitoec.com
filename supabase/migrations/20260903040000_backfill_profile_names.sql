@@ -35,3 +35,21 @@ END;
 $$;
 
 REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.sync_my_profile_name()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  UPDATE public.profiles
+  SET nombre_completo = COALESCE(auth.jwt()->'user_metadata'->>'full_name', auth.jwt()->'user_metadata'->>'name')
+  WHERE id = auth.uid()
+    AND NULLIF(BTRIM(nombre_completo), '') IS NULL
+    AND COALESCE(auth.jwt()->'user_metadata'->>'full_name', auth.jwt()->'user_metadata'->>'name') IS NOT NULL;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.sync_my_profile_name() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.sync_my_profile_name() TO authenticated;

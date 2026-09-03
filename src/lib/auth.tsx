@@ -121,6 +121,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let active = true;
     setRoleLoading(true);
 
+    void supabase.rpc("sync_my_profile_name");
+
     const refreshRole = async () => {
       try {
         const { data, error } = await supabase

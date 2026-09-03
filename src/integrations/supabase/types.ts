@@ -375,6 +375,7 @@ export type Database = {
       expire_promociones: { Args: never; Returns: undefined };
       mark_messages_delivered: { Args: { _message_ids: string[] }; Returns: undefined };
       mark_messages_read: { Args: { _chat_id: string }; Returns: undefined };
+      sync_my_profile_name: { Args: never; Returns: undefined };
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"];
