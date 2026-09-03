@@ -187,6 +187,18 @@ function AuthPage() {
           return;
         }
 
+        if (data.user) {
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .upsert(
+              { id: data.user.id, nombre_completo: name.trim() },
+              { onConflict: "id", ignoreDuplicates: false },
+            );
+          if (profileError) {
+            console.error("No se pudo guardar el nombre del perfil:", profileError);
+          }
+        }
+
         if (data.session && phone) {
           const linkErr = await linkPhoneToAccount(phone);
           if (linkErr.error) {

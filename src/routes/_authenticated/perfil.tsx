@@ -99,6 +99,7 @@ function PerfilPage() {
     if (error || pErr)
       return toast.error(toUserMessage(error ?? pErr, "No se pudo actualizar el perfil."));
     toast.success(t("profile_updated"));
+    navigate({ to: "/" });
   };
 
   return (
