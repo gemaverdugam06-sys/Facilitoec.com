@@ -100,6 +100,9 @@ export function Header() {
                   <DropdownMenuItem onClick={() => navigate({ to: "/perfil" })}>
                     {t("profile")}
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate({ to: "/soporte" })}>
+                    Soporte técnico
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate({ to: "/chats" })}>
                     <MessageCircle className="mr-2 h-4 w-4" /> {t("chats")}
                     {unread > 0 && (

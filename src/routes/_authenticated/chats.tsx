@@ -18,7 +18,7 @@ type ChatRealtimeRow = Pick<
 
 interface ChatRow {
   id: string;
-  producto_id: string;
+  producto_id: string | null;
   comprador_id: string;
   vendedor_id: string;
   updated_at: string;
@@ -124,7 +124,7 @@ function ChatsPage() {
                           {other?.nombre_completo ?? "Usuario"}
                         </p>
                         <p className="truncate text-xs text-muted-foreground">
-                          {c.productos?.titulo}
+                          {c.productos?.titulo ?? "Producto ya no disponible"}
                         </p>
                       </div>
                       {count > 0 && (

@@ -17,12 +17,16 @@ interface Mensaje {
   remitente_id: string;
   contenido: string;
   created_at: string;
+  deleted_at: string | null;
+  editado_en: string | null;
+  estado_envio: string;
   nombre_remitente: string | null;
 }
 interface ChatInfo {
   id: string;
   comprador_id: string;
   vendedor_id: string;
+  producto_id: string | null;
   productos: { id: string; titulo: string } | null;
 }
 
@@ -39,6 +43,7 @@ function ChatPage() {
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [texto, setTexto] = useState("");
   const [loading, setLoading] = useState(true);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Función dedicada a traer los mensajes actualizados de la base de datos
@@ -48,6 +53,7 @@ function ChatPage() {
       .from("mensajes")
       .select("*")
       .eq("chat_id", chatId)
+      .is("deleted_at", null)
       .order("created_at", { ascending: true });
 
     if (!data) return;
@@ -81,7 +87,7 @@ function ChatPage() {
     // Cargar metadatos del chat
     supabase
       .from("chats")
-      .select("id, comprador_id, vendedor_id, productos:producto_id (id, titulo)")
+      .select("id, comprador_id, vendedor_id, producto_id, productos:producto_id (id, titulo)")
       .eq("id", chatId)
       .maybeSingle()
       .then(({ data }) => {
@@ -135,18 +141,74 @@ function ChatPage() {
     }
   }, [mensajes.length]);
 
+  useEffect(() => {
+    if (!user || !chatId) return;
+    void setReadReceipts();
+  }, [user?.id, chatId]);
+
+  const canEditMessage = (createdAt: string) => {
+    if (!user) return false;
+    const diffMs = Date.now() - new Date(createdAt).getTime();
+    return diffMs <= 5 * 60 * 1000;
+  };
+
+  const setReadReceipts = async () => {
+    if (!user || !chatId) return;
+    const { data: unreadMessages } = await supabase
+      .from("mensajes")
+      .select("id")
+      .eq("chat_id", chatId)
+      .neq("remitente_id", user.id)
+      .is("deleted_at", null)
+      .neq("estado_envio", "read");
+
+    if (!unreadMessages || unreadMessages.length === 0) return;
+
+    await supabase
+      .from("mensajes")
+      .update({ estado_envio: "read" })
+      .eq("chat_id", chatId)
+      .neq("remitente_id", user.id)
+      .is("deleted_at", null);
+  };
+
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
     const v = texto.trim();
     if (!v || !user) return;
 
-    setTexto(""); // Limpieza veloz de la caja de texto
+    if (editingMessageId) {
+      const original = mensajes.find((m) => m.id === editingMessageId);
+      const withinWindow = original ? canEditMessage(original.created_at) : false;
+      if (!original || !withinWindow) {
+        toast.error("Ya no puedes editar este mensaje porque pasaron más de 5 minutos.");
+        return;
+      }
 
-    // Inserción directa enviando el objeto plano a Supabase
+      const { error } = await supabase
+        .from("mensajes")
+        .update({ contenido: v, editado_en: new Date().toISOString() })
+        .eq("id", editingMessageId)
+        .eq("remitente_id", user.id);
+
+      if (error) {
+        toast.error(toUserMessage(error, "No se pudo editar el mensaje."));
+        return;
+      }
+
+      setEditingMessageId(null);
+      setTexto("");
+      await refrescarMensajes();
+      return;
+    }
+
+    setTexto("");
+
     const { error } = await supabase.from("mensajes").insert({
       chat_id: chatId,
       remitente_id: user.id,
       contenido: v,
+      estado_envio: "delivered",
     });
 
     if (error) {
@@ -156,11 +218,30 @@ function ChatPage() {
       return;
     }
 
-    // Refrescamos inmediatamente el estado local tras guardar con éxito
     await refrescarMensajes();
-
-    // Actualizamos estampa del chat principal
     await supabase.from("chats").update({ updated_at: new Date().toISOString() }).eq("id", chatId);
+  };
+
+  const borrarMensaje = async (mensajeId: string) => {
+    const original = mensajes.find((m) => m.id === mensajeId);
+    if (!original || !canEditMessage(original.created_at) || !user || original.remitente_id !== user.id) {
+      toast.error("Ya no puedes borrar este mensaje porque pasó el tiempo permitido.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("mensajes")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", mensajeId)
+      .eq("remitente_id", user.id);
+
+    if (error) {
+      toast.error(toUserMessage(error, "No se pudo borrar el mensaje."));
+      return;
+    }
+
+    await refrescarMensajes();
+    toast.success("Mensaje eliminado");
   };
 
   return (
@@ -171,7 +252,7 @@ function ChatPage() {
           <Button variant="ghost" size="icon" onClick={() => nav({ to: "/chats" })}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          {info?.productos && (
+          {info?.productos ? (
             <Link
               to="/producto/$id"
               params={{ id: info.productos.id }}
@@ -179,6 +260,10 @@ function ChatPage() {
             >
               {info.productos.titulo}
             </Link>
+          ) : (
+            <span className="truncate text-sm font-semibold text-muted-foreground">
+              Producto ya no disponible
+            </span>
           )}
         </div>
       </div>
@@ -194,6 +279,15 @@ function ChatPage() {
           ) : (
             mensajes.map((m) => {
               const mine = m.remitente_id === user?.id;
+              const editable = mine && canEditMessage(m.created_at);
+              const statusIcon =
+                mine && m.estado_envio === "read"
+                  ? "✓✓"
+                  : mine && m.estado_envio === "delivered"
+                    ? "✓✓"
+                    : mine
+                      ? "✓"
+                      : null;
               return (
                 <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                   <div
@@ -202,7 +296,58 @@ function ChatPage() {
                     <p className="mb-1 text-xs font-semibold opacity-80">
                       {m.nombre_remitente ?? "Usuario"}
                     </p>
-                    {m.contenido}
+                    {editingMessageId === m.id ? (
+                      <div className="space-y-2">
+                        <Input
+                          value={texto}
+                          onChange={(e) => setTexto(e.target.value)}
+                          maxLength={1000}
+                          autoFocus
+                        />
+                        <div className="flex gap-2">
+                          <Button type="button" size="sm" onClick={enviar}>
+                            Guardar
+                          </Button>
+                          <Button type="button" variant="outline" size="sm" onClick={() => {
+                            setEditingMessageId(null);
+                            setTexto("");
+                          }}>
+                            Cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="whitespace-pre-wrap">{m.contenido}</p>
+                        {m.editado_en && <span className="mt-1 block text-[10px] opacity-80">Editado</span>}
+                      </>
+                    )}
+                    {mine && (
+                      <div className="mt-1 flex items-center justify-end gap-1 text-[10px] opacity-80">
+                        {statusIcon && <span>{statusIcon}</span>}
+                        {editable && (
+                          <>
+                            <button
+                              type="button"
+                              className="ml-1 underline underline-offset-2"
+                              onClick={() => {
+                                setEditingMessageId(m.id);
+                                setTexto(m.contenido);
+                              }}
+                            >
+                              Editar
+                            </button>
+                            <button
+                              type="button"
+                              className="underline underline-offset-2"
+                              onClick={() => borrarMensaje(m.id)}
+                            >
+                              Borrar
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -216,7 +361,7 @@ function ChatPage() {
           <Input
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
-            placeholder={t("type_message")}
+            placeholder={editingMessageId ? "Edita tu mensaje" : t("type_message")}
             maxLength={1000}
           />
           <Button

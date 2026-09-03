@@ -20,6 +20,7 @@ import { Route as CategoriaIdRouteImport } from './routes/categoria.$id'
 import { Route as AuthVerificarTelefonoRouteImport } from './routes/auth.verificar-telefono'
 import { Route as AuthRecuperarRouteImport } from './routes/auth.recuperar'
 import { Route as AuthNuevaContrasenaRouteImport } from './routes/auth.nueva-contrasena'
+import { Route as AuthenticatedSoporteRouteImport } from './routes/_authenticated/soporte'
 import { Route as AuthenticatedPublicarRouteImport } from './routes/_authenticated/publicar'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedMisPublicacionesRouteImport } from './routes/_authenticated/mis-publicaciones'
@@ -84,6 +85,11 @@ const AuthNuevaContrasenaRoute = AuthNuevaContrasenaRouteImport.update({
   id: '/nueva-contrasena',
   path: '/nueva-contrasena',
   getParentRoute: () => AuthRoute,
+} as any)
+const AuthenticatedSoporteRoute = AuthenticatedSoporteRouteImport.update({
+  id: '/soporte',
+  path: '/soporte',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPublicarRoute = AuthenticatedPublicarRouteImport.update({
   id: '/publicar',
@@ -151,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/mis-publicaciones': typeof AuthenticatedMisPublicacionesRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/publicar': typeof AuthenticatedPublicarRoute
+  '/soporte': typeof AuthenticatedSoporteRoute
   '/auth/nueva-contrasena': typeof AuthNuevaContrasenaRoute
   '/auth/recuperar': typeof AuthRecuperarRoute
   '/auth/verificar-telefono': typeof AuthVerificarTelefonoRoute
@@ -173,6 +180,7 @@ export interface FileRoutesByTo {
   '/mis-publicaciones': typeof AuthenticatedMisPublicacionesRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/publicar': typeof AuthenticatedPublicarRoute
+  '/soporte': typeof AuthenticatedSoporteRoute
   '/auth/nueva-contrasena': typeof AuthNuevaContrasenaRoute
   '/auth/recuperar': typeof AuthRecuperarRoute
   '/auth/verificar-telefono': typeof AuthVerificarTelefonoRoute
@@ -197,6 +205,7 @@ export interface FileRoutesById {
   '/_authenticated/mis-publicaciones': typeof AuthenticatedMisPublicacionesRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/publicar': typeof AuthenticatedPublicarRoute
+  '/_authenticated/soporte': typeof AuthenticatedSoporteRoute
   '/auth/nueva-contrasena': typeof AuthNuevaContrasenaRoute
   '/auth/recuperar': typeof AuthRecuperarRoute
   '/auth/verificar-telefono': typeof AuthVerificarTelefonoRoute
@@ -221,6 +230,7 @@ export interface FileRouteTypes {
     | '/mis-publicaciones'
     | '/perfil'
     | '/publicar'
+    | '/soporte'
     | '/auth/nueva-contrasena'
     | '/auth/recuperar'
     | '/auth/verificar-telefono'
@@ -243,6 +253,7 @@ export interface FileRouteTypes {
     | '/mis-publicaciones'
     | '/perfil'
     | '/publicar'
+    | '/soporte'
     | '/auth/nueva-contrasena'
     | '/auth/recuperar'
     | '/auth/verificar-telefono'
@@ -266,6 +277,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mis-publicaciones'
     | '/_authenticated/perfil'
     | '/_authenticated/publicar'
+    | '/_authenticated/soporte'
     | '/auth/nueva-contrasena'
     | '/auth/recuperar'
     | '/auth/verificar-telefono'
@@ -369,6 +381,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthNuevaContrasenaRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_authenticated/soporte': {
+      id: '/_authenticated/soporte'
+      path: '/soporte'
+      fullPath: '/soporte'
+      preLoaderRoute: typeof AuthenticatedSoporteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/publicar': {
       id: '/_authenticated/publicar'
       path: '/publicar'
@@ -448,6 +467,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMisPublicacionesRoute: typeof AuthenticatedMisPublicacionesRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedPublicarRoute: typeof AuthenticatedPublicarRoute
+  AuthenticatedSoporteRoute: typeof AuthenticatedSoporteRoute
   AuthenticatedChatChatIdRoute: typeof AuthenticatedChatChatIdRoute
   AuthenticatedEditarIdRoute: typeof AuthenticatedEditarIdRoute
   AuthenticatedPromocionarProductoIdRoute: typeof AuthenticatedPromocionarProductoIdRoute
@@ -460,6 +480,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMisPublicacionesRoute: AuthenticatedMisPublicacionesRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedPublicarRoute: AuthenticatedPublicarRoute,
+  AuthenticatedSoporteRoute: AuthenticatedSoporteRoute,
   AuthenticatedChatChatIdRoute: AuthenticatedChatChatIdRoute,
   AuthenticatedEditarIdRoute: AuthenticatedEditarIdRoute,
   AuthenticatedPromocionarProductoIdRoute:

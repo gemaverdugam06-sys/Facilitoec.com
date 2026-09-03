@@ -34,7 +34,7 @@ export type Database = {
           comprador_id: string;
           created_at: string;
           id: string;
-          producto_id: string;
+          producto_id: string | null;
           ultimo_leido_comprador: string | null;
           ultimo_leido_vendedor: string | null;
           updated_at: string;
@@ -44,7 +44,7 @@ export type Database = {
           comprador_id: string;
           created_at?: string;
           id?: string;
-          producto_id: string;
+          producto_id?: string | null;
           ultimo_leido_comprador?: string | null;
           ultimo_leido_vendedor?: string | null;
           updated_at?: string;
@@ -54,7 +54,7 @@ export type Database = {
           comprador_id?: string;
           created_at?: string;
           id?: string;
-          producto_id?: string;
+          producto_id?: string | null;
           ultimo_leido_comprador?: string | null;
           ultimo_leido_vendedor?: string | null;
           updated_at?: string;
@@ -89,6 +89,9 @@ export type Database = {
           chat_id: string;
           contenido: string;
           created_at: string;
+          deleted_at: string | null;
+          editado_en: string | null;
+          estado_envio: string;
           id: string;
           remitente_id: string;
         };
@@ -96,6 +99,9 @@ export type Database = {
           chat_id: string;
           contenido: string;
           created_at?: string;
+          deleted_at?: string | null;
+          editado_en?: string | null;
+          estado_envio?: string;
           id?: string;
           remitente_id: string;
         };
@@ -103,6 +109,9 @@ export type Database = {
           chat_id?: string;
           contenido?: string;
           created_at?: string;
+          deleted_at?: string | null;
+          editado_en?: string | null;
+          estado_envio?: string;
           id?: string;
           remitente_id?: string;
         };
@@ -236,6 +245,48 @@ export type Database = {
           id?: string;
           telefono?: string | null;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      support_tickets: {
+        Row: {
+          category: string;
+          created_at: string;
+          description: string;
+          email: string;
+          id: string;
+          name: string;
+          status: string;
+          subject: string;
+          ticket_number: number | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          category: string;
+          created_at?: string;
+          description: string;
+          email: string;
+          id?: string;
+          name: string;
+          status?: string;
+          subject: string;
+          ticket_number?: number | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          category?: string;
+          created_at?: string;
+          description?: string;
+          email?: string;
+          id?: string;
+          name?: string;
+          status?: string;
+          subject?: string;
+          ticket_number?: number | null;
+          updated_at?: string;
+          user_id?: string;
         };
         Relationships: [];
       };
