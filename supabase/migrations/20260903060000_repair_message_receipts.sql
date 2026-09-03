@@ -1,4 +1,4 @@
--- Persist server timestamps for delivery and read receipts.
+-- Ensure message receipts exist even if an earlier realtime migration was interrupted.
 ALTER TABLE public.mensajes
   ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS read_at TIMESTAMPTZ;
@@ -44,6 +44,8 @@ BEGIN
 END;
 $$;
 
+REVOKE ALL ON FUNCTION public.mark_messages_delivered(uuid[]) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.mark_messages_read(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.mark_messages_delivered(uuid[]) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.mark_messages_read(uuid) TO authenticated;
 
