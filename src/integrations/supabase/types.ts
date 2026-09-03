@@ -84,6 +84,27 @@ export type Database = {
           },
         ];
       };
+      chat_user_states: {
+        Row: {
+          archived_at: string | null;
+          chat_id: string;
+          deleted_at: string | null;
+          user_id: string;
+        };
+        Insert: {
+          archived_at?: string | null;
+          chat_id: string;
+          deleted_at?: string | null;
+          user_id: string;
+        };
+        Update: {
+          archived_at?: string | null;
+          chat_id?: string;
+          deleted_at?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       mensajes: {
         Row: {
           chat_id: string;

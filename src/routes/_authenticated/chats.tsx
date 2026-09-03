@@ -6,10 +6,11 @@ import { useI18n } from "@/lib/i18n";
 import { Header } from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2 } from "lucide-react";
+import { Archive, ArchiveRestore, Loader2, Trash2 } from "lucide-react";
 import { useUnreadChats } from "@/hooks/use-unread";
 import { toUserMessage } from "@/lib/error-messages";
 import type { Database } from "@/integrations/supabase/types";
+import { toast } from "sonner";
 
 type ChatRealtimeRow = Pick<
   Database["public"]["Tables"]["chats"]["Row"],
@@ -27,6 +28,12 @@ interface ChatRow {
   vendedor: { nombre_completo: string | null; avatar_url: string | null } | null;
 }
 
+interface ChatUserState {
+  chat_id: string;
+  archived_at: string | null;
+  deleted_at: string | null;
+}
+
 export const Route = createFileRoute("/_authenticated/chats")({
   component: ChatsPage,
 });
@@ -36,7 +43,9 @@ function ChatsPage() {
   const { t } = useI18n();
   const { unread } = useUnreadChats();
   const [chats, setChats] = useState<ChatRow[]>([]);
+  const [archivedChatIds, setArchivedChatIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [working, setWorking] = useState<string | null>(null);
 
   const cargarChats = async () => {
     if (!user) return;
@@ -60,13 +69,63 @@ function ChatsPage() {
       return;
     }
 
-    // Ordenar localmente o asegurar que guarde el arreglo ordenado por fecha
+    const { data: states, error: statesError } = await supabase
+      .from("chat_user_states")
+      .select("chat_id, archived_at, deleted_at")
+      .eq("user_id", user.id);
+
+    if (statesError) {
+      toUserMessage(statesError, "Error al cargar el estado de los chats.");
+      setLoading(false);
+      return;
+    }
+
+    const stateByChat = new Map(
+      ((states as unknown as ChatUserState[]) ?? []).map((state) => [state.chat_id, state]),
+    );
+    setArchivedChatIds(
+      new Set(
+        [...stateByChat.values()]
+          .filter((state) => state.archived_at && !state.deleted_at)
+          .map((state) => state.chat_id),
+      ),
+    );
+
     const chatsOrdenados = ((data as unknown as ChatRow[]) ?? []).sort(
       (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
     );
 
-    setChats(chatsOrdenados);
+    setChats(chatsOrdenados.filter((chat) => !stateByChat.get(chat.id)?.deleted_at));
     setLoading(false);
+  };
+
+  const updateChatState = async (chat: ChatRow, action: "archive" | "restore" | "delete") => {
+    if (!user) return;
+    if (action === "delete" && !window.confirm("¿Eliminar este chat de tu lista?")) return;
+
+    setWorking(chat.id);
+    const values =
+      action === "archive"
+        ? { archived_at: new Date().toISOString(), deleted_at: null }
+        : action === "restore"
+          ? { archived_at: null, deleted_at: null }
+          : { deleted_at: new Date().toISOString() };
+    const { error } = await supabase
+      .from("chat_user_states")
+      .upsert({ chat_id: chat.id, user_id: user.id, ...values }, { onConflict: "chat_id,user_id" });
+    setWorking(null);
+    if (error) {
+      toast.error(toUserMessage(error, "No se pudo actualizar el chat."));
+      return;
+    }
+    await cargarChats();
+    toast.success(
+      action === "archive"
+        ? "Chat archivado"
+        : action === "restore"
+          ? "Chat restaurado"
+          : "Chat eliminado",
+    );
   };
 
   useEffect(() => {
@@ -104,39 +163,101 @@ function ChatsPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {chats.map((c) => {
-              const other = c.comprador_id === user?.id ? c.vendedor : c.comprador;
-              const count = unread[c.id] ?? 0;
-              return (
-                <Link key={c.id} to="/chat/$chatId" params={{ chatId: c.id }}>
-                  <Card
-                    className={`transition hover:bg-accent ${count > 0 ? "border-primary/40 bg-primary/5" : ""}`}
-                  >
-                    <CardContent className="flex items-center gap-3 p-3">
-                      <Avatar>
-                        <AvatarImage src={other?.avatar_url ?? undefined} />
-                        <AvatarFallback>{other?.nombre_completo?.[0] ?? "?"}</AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <p
-                          className={`truncate text-sm ${count > 0 ? "font-bold" : "font-semibold"}`}
+            {[
+              {
+                title: "Chats",
+                items: chats.filter((chat) => !archivedChatIds.has(chat.id)),
+                archived: false,
+              },
+              {
+                title: "Archivados",
+                items: chats.filter((chat) => archivedChatIds.has(chat.id)),
+                archived: true,
+              },
+            ].map(
+              (section) =>
+                section.items.length > 0 && (
+                  <section key={section.title} className="space-y-2">
+                    <h2 className="pt-2 text-sm font-semibold text-muted-foreground">
+                      {section.title}
+                    </h2>
+                    {section.items.map((c) => {
+                      const other = c.comprador_id === user?.id ? c.vendedor : c.comprador;
+                      const count = unread[c.id] ?? 0;
+                      return (
+                        <Card
+                          key={c.id}
+                          className={`transition hover:bg-accent ${count > 0 ? "border-primary/40 bg-primary/5" : ""}`}
                         >
-                          {other?.nombre_completo ?? "Usuario"}
-                        </p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {c.productos?.titulo ?? "Producto ya no disponible"}
-                        </p>
-                      </div>
-                      {count > 0 && (
-                        <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground">
-                          {count > 99 ? "99+" : count}
-                        </span>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
+                          <div className="flex items-center gap-3 p-3">
+                            <Link
+                              to="/chat/$chatId"
+                              params={{ chatId: c.id }}
+                              className="flex min-w-0 flex-1 items-center gap-3"
+                            >
+                              <CardContent className="flex items-center gap-3 p-3">
+                                <Avatar>
+                                  <AvatarImage src={other?.avatar_url ?? undefined} />
+                                  <AvatarFallback>
+                                    {other?.nombre_completo?.[0] ?? "?"}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="min-w-0 flex-1">
+                                  <p
+                                    className={`truncate text-sm ${count > 0 ? "font-bold" : "font-semibold"}`}
+                                  >
+                                    {other?.nombre_completo ?? "Usuario"}
+                                  </p>
+                                  <p className="truncate text-xs text-muted-foreground">
+                                    {c.productos?.titulo ?? "Producto ya no disponible"}
+                                  </p>
+                                </div>
+                                {count > 0 && (
+                                  <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground">
+                                    {count > 99 ? "99+" : count}
+                                  </span>
+                                )}
+                              </CardContent>
+                            </Link>
+                            <div className="flex shrink-0 gap-1">
+                              <button
+                                type="button"
+                                title={section.archived ? "Restaurar chat" : "Archivar chat"}
+                                aria-label={section.archived ? "Restaurar chat" : "Archivar chat"}
+                                className="rounded-md p-2 hover:bg-accent"
+                                disabled={working === c.id}
+                                onClick={() =>
+                                  updateChatState(c, section.archived ? "restore" : "archive")
+                                }
+                              >
+                                {section.archived ? (
+                                  <ArchiveRestore className="h-4 w-4" />
+                                ) : (
+                                  <Archive className="h-4 w-4" />
+                                )}
+                              </button>
+                              <button
+                                type="button"
+                                title="Eliminar chat"
+                                aria-label="Eliminar chat"
+                                className="rounded-md p-2 text-destructive hover:bg-destructive/10"
+                                disabled={working === c.id}
+                                onClick={() => updateChatState(c, "delete")}
+                              >
+                                {working === c.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" />
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  </section>
+                ),
+            )}
           </div>
         )}
       </main>

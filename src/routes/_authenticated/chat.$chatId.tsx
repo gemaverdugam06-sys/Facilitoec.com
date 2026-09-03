@@ -178,10 +178,24 @@ function ChatPage() {
       .map((mensaje) => mensaje.id);
 
     if (pendingDeliveryIds.length > 0) {
-      await supabase.rpc("mark_messages_delivered", { _message_ids: pendingDeliveryIds });
+      const { error } = await supabase.rpc("mark_messages_delivered", {
+        _message_ids: pendingDeliveryIds,
+      });
+      if (error) {
+        console.error("No se pudo confirmar la entrega:", error);
+        toast.error("No se pudo confirmar la entrega. Aplica la migración del chat en Supabase.");
+        return;
+      }
     }
 
-    await supabase.rpc("mark_messages_read", { _chat_id: chatId });
+    const { error } = await supabase.rpc("mark_messages_read", { _chat_id: chatId });
+    if (error) {
+      console.error("No se pudo confirmar la lectura:", error);
+      toast.error("No se pudo confirmar la lectura. Aplica la migración del chat en Supabase.");
+      return;
+    }
+
+    await refrescarMensajes();
   };
 
   const enviar = async (e: React.FormEvent) => {
