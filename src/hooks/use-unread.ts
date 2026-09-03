@@ -43,6 +43,7 @@ export function useUnreadChats() {
             .select("id", { count: "exact", head: true })
             .eq("chat_id", c.id)
             .neq("remitente_id", user.id)
+            .is("deleted_at", null)
             .gt("created_at", after ?? new Date(0).toISOString());
           counts[c.id] = count ?? 0;
         }),

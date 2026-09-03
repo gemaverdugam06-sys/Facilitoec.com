@@ -90,9 +90,11 @@ export type Database = {
           contenido: string;
           created_at: string;
           deleted_at: string | null;
+          delivered_at: string | null;
           editado_en: string | null;
           estado_envio: string;
           id: string;
+          read_at: string | null;
           remitente_id: string;
         };
         Insert: {
@@ -100,9 +102,11 @@ export type Database = {
           contenido: string;
           created_at?: string;
           deleted_at?: string | null;
+          delivered_at?: string | null;
           editado_en?: string | null;
           estado_envio?: string;
           id?: string;
+          read_at?: string | null;
           remitente_id: string;
         };
         Update: {
@@ -110,9 +114,11 @@ export type Database = {
           contenido?: string;
           created_at?: string;
           deleted_at?: string | null;
+          delivered_at?: string | null;
           editado_en?: string | null;
           estado_envio?: string;
           id?: string;
+          read_at?: string | null;
           remitente_id?: string;
         };
         Relationships: [
@@ -367,6 +373,8 @@ export type Database = {
     };
     Functions: {
       expire_promociones: { Args: never; Returns: undefined };
+      mark_messages_delivered: { Args: { _message_ids: string[] }; Returns: undefined };
+      mark_messages_read: { Args: { _chat_id: string }; Returns: undefined };
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"];

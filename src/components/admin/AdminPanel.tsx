@@ -541,6 +541,27 @@ export function AdminPanel() {
     }
   };
 
+  const onEliminarTransaccion = async (tx: Tx) => {
+    const ok = window.confirm(
+      `¿Deseas eliminar del historial la transacción de ${tx.productos?.titulo ?? "este producto"}?`,
+    );
+    if (!ok) return;
+
+    setWorking(tx.id);
+    try {
+      const { error } = await supabase.from("transacciones").delete().eq("id", tx.id);
+      if (error) throw error;
+
+      setTxs((prev) => prev.filter((item) => item.id !== tx.id));
+      toast.success("Transacción eliminada del historial");
+    } catch (error) {
+      console.error("Error al eliminar transacción:", error);
+      toast.error("No se pudo eliminar la transacción");
+    } finally {
+      setWorking(null);
+    }
+  };
+
   const onAprobarProducto = async (productoId: string) => {
     setWorking(productoId);
     try {
@@ -853,11 +874,30 @@ export function AdminPanel() {
                           — {t.productos?.titulo ?? "?"} · {t.profiles?.nombre_completo ?? ""}
                         </span>
                       </div>
+                      <p className="text-xs text-muted-foreground">
+                        Fecha y hora: {new Date(t.created_at).toLocaleString()}
+                      </p>
                       {t.notas_admin && (
                         <p className="mt-1 rounded bg-muted/50 px-2 py-1 text-xs italic text-muted-foreground">
                           {t.notas_admin}
                         </p>
                       )}
+                      <div className="flex justify-end pt-1">
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          disabled={working === t.id}
+                          onClick={() => onEliminarTransaccion(t)}
+                        >
+                          {working === t.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <>
+                              <Trash2 className="mr-1 h-4 w-4" /> Eliminar
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}

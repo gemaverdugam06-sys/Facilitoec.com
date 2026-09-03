@@ -18,8 +18,10 @@ interface Mensaje {
   contenido: string;
   created_at: string;
   deleted_at: string | null;
+  delivered_at: string | null;
   editado_en: string | null;
   estado_envio: string;
+  read_at: string | null;
   nombre_remitente: string | null;
 }
 interface ChatInfo {
@@ -97,12 +99,12 @@ function ChatPage() {
     // Carga inicial de mensajes
     refrescarMensajes().then(() => setLoading(false));
 
-    // Intento de conexión por tiempo real (si Cloudflare lo permite)
+    // Realtime actualiza tanto mensajes nuevos como sus recibos de entrega/lectura.
     const ch = supabase
       .channel(`chat-${chatId}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "mensajes", filter: `chat_id=eq.${chatId}` },
+        { event: "*", schema: "public", table: "mensajes", filter: `chat_id=eq.${chatId}` },
         () => {
           refrescarMensajes();
         },
@@ -142,9 +144,9 @@ function ChatPage() {
   }, [mensajes.length]);
 
   useEffect(() => {
-    if (!user || !chatId) return;
-    void setReadReceipts();
-  }, [user?.id, chatId]);
+    if (!user || !chatId || loading || mensajes.length === 0) return;
+    void confirmReceipts();
+  }, [user?.id, chatId, loading, mensajes.length]);
 
   const canEditMessage = (createdAt: string) => {
     if (!user) return false;
@@ -152,24 +154,20 @@ function ChatPage() {
     return diffMs <= 5 * 60 * 1000;
   };
 
-  const setReadReceipts = async () => {
+  const formatMessageTime = (createdAt: string) =>
+    new Date(createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  const confirmReceipts = async () => {
     if (!user || !chatId) return;
-    const { data: unreadMessages } = await supabase
-      .from("mensajes")
-      .select("id")
-      .eq("chat_id", chatId)
-      .neq("remitente_id", user.id)
-      .is("deleted_at", null)
-      .neq("estado_envio", "read");
+    const pendingDeliveryIds = mensajes
+      .filter((mensaje) => mensaje.remitente_id !== user.id && !mensaje.delivered_at)
+      .map((mensaje) => mensaje.id);
 
-    if (!unreadMessages || unreadMessages.length === 0) return;
+    if (pendingDeliveryIds.length > 0) {
+      await supabase.rpc("mark_messages_delivered", { _message_ids: pendingDeliveryIds });
+    }
 
-    await supabase
-      .from("mensajes")
-      .update({ estado_envio: "read" })
-      .eq("chat_id", chatId)
-      .neq("remitente_id", user.id)
-      .is("deleted_at", null);
+    await supabase.rpc("mark_messages_read", { _chat_id: chatId });
   };
 
   const enviar = async (e: React.FormEvent) => {
@@ -208,7 +206,7 @@ function ChatPage() {
       chat_id: chatId,
       remitente_id: user.id,
       contenido: v,
-      estado_envio: "delivered",
+      estado_envio: "sent",
     });
 
     if (error) {
@@ -224,7 +222,12 @@ function ChatPage() {
 
   const borrarMensaje = async (mensajeId: string) => {
     const original = mensajes.find((m) => m.id === mensajeId);
-    if (!original || !canEditMessage(original.created_at) || !user || original.remitente_id !== user.id) {
+    if (
+      !original ||
+      !canEditMessage(original.created_at) ||
+      !user ||
+      original.remitente_id !== user.id
+    ) {
       toast.error("Ya no puedes borrar este mensaje porque pasó el tiempo permitido.");
       return;
     }
@@ -280,14 +283,7 @@ function ChatPage() {
             mensajes.map((m) => {
               const mine = m.remitente_id === user?.id;
               const editable = mine && canEditMessage(m.created_at);
-              const statusIcon =
-                mine && m.estado_envio === "read"
-                  ? "✓✓"
-                  : mine && m.estado_envio === "delivered"
-                    ? "✓✓"
-                    : mine
-                      ? "✓"
-                      : null;
+              const statusIcon = mine ? (m.read_at ? "✓✓" : m.delivered_at ? "✓✓" : "✓") : null;
               return (
                 <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                   <div
@@ -308,10 +304,15 @@ function ChatPage() {
                           <Button type="button" size="sm" onClick={enviar}>
                             Guardar
                           </Button>
-                          <Button type="button" variant="outline" size="sm" onClick={() => {
-                            setEditingMessageId(null);
-                            setTexto("");
-                          }}>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setEditingMessageId(null);
+                              setTexto("");
+                            }}
+                          >
                             Cancelar
                           </Button>
                         </div>
@@ -319,12 +320,19 @@ function ChatPage() {
                     ) : (
                       <>
                         <p className="whitespace-pre-wrap">{m.contenido}</p>
-                        {m.editado_en && <span className="mt-1 block text-[10px] opacity-80">Editado</span>}
+                        <div className="mt-1 flex items-center justify-end gap-1 text-[10px] opacity-80">
+                          {m.editado_en && <span>Editado</span>}
+                          <span>{formatMessageTime(m.created_at)}</span>
+                        </div>
                       </>
                     )}
                     {mine && (
                       <div className="mt-1 flex items-center justify-end gap-1 text-[10px] opacity-80">
-                        {statusIcon && <span>{statusIcon}</span>}
+                        {statusIcon && (
+                          <span className={m.read_at ? "text-blue-500" : undefined}>
+                            {statusIcon}
+                          </span>
+                        )}
                         {editable && (
                           <>
                             <button
