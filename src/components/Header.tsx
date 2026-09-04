@@ -22,7 +22,11 @@ export function Header() {
   const navigate = useNavigate();
   const { total: unread } = useUnreadChats();
   const { pendingProducts } = useAdminNotifications();
-  const { notifications: purchaseNotifications, decidePurchase } = usePurchaseNotifications();
+  const {
+    notifications: purchaseNotifications,
+    historyNotifications,
+    decidePurchase,
+  } = usePurchaseNotifications();
 
   return (
     <motion.header
@@ -64,32 +68,55 @@ export function Header() {
                 </Link>
               </Button>
 
-              {purchaseNotifications.length > 0 && (
+              {(purchaseNotifications.length > 0 || historyNotifications.length > 0) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="relative" aria-label="Solicitudes de compra">
                       <ShoppingBag className="h-5 w-5" />
-                      <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
-                        {purchaseNotifications.length}
-                      </span>
+                      {purchaseNotifications.length > 0 && (
+                        <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                          {purchaseNotifications.length}
+                        </span>
+                      )}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-80">
-                    {purchaseNotifications.map((notification) => (
-                      <DropdownMenuItem key={notification.id} className="flex-col items-stretch gap-2">
-                        <span className="text-sm">{notification.mensaje}</span>
-                        {notification.tipo === "compra_solicitada" && (
-                          <span className="flex gap-2">
-                            <Button size="sm" onClick={() => void decidePurchase(notification, "CONFIRMADA")}>
-                              Aceptar
-                            </Button>
-                            <Button size="sm" variant="destructive" onClick={() => void decidePurchase(notification, "CANCELADA")}>
-                              Rechazar
-                            </Button>
-                          </span>
-                        )}
-                      </DropdownMenuItem>
-                    ))}
+                    {purchaseNotifications.length > 0 && (
+                      <>
+                        <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          Pendientes
+                        </div>
+                        {purchaseNotifications.map((notification) => (
+                          <DropdownMenuItem key={notification.id} className="flex-col items-stretch gap-2">
+                            <span className="text-sm">{notification.mensaje}</span>
+                            {notification.tipo === "compra_solicitada" && (
+                              <span className="flex gap-2">
+                                <Button size="sm" onClick={() => void decidePurchase(notification, "CONFIRMADA")}>
+                                  Aceptar
+                                </Button>
+                                <Button size="sm" variant="destructive" onClick={() => void decidePurchase(notification, "CANCELADA")}>
+                                  Rechazar
+                                </Button>
+                              </span>
+                            )}
+                          </DropdownMenuItem>
+                        ))}
+                      </>
+                    )}
+
+                    {historyNotifications.length > 0 && (
+                      <>
+                        {purchaseNotifications.length > 0 && <DropdownMenuSeparator />}
+                        <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          Historial
+                        </div>
+                        {historyNotifications.map((notification) => (
+                          <DropdownMenuItem key={notification.id} className="cursor-default focus:bg-transparent focus:text-current">
+                            <span className="text-sm text-muted-foreground">{notification.mensaje}</span>
+                          </DropdownMenuItem>
+                        ))}
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}

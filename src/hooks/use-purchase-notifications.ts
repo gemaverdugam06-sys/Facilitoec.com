@@ -15,47 +15,71 @@ type PurchaseNotification = {
 export function usePurchaseNotifications() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<PurchaseNotification[]>([]);
+  const [historyNotifications, setHistoryNotifications] = useState<PurchaseNotification[]>([]);
+
+  const refresh = async () => {
+    if (!user) {
+      setNotifications([]);
+      setHistoryNotifications([]);
+      return;
+    }
+
+    const { data: rows } = await supabase
+      .from("notificaciones")
+      .select("id, compra_id, mensaje, tipo, leido, created_at")
+      .eq("user_id", user.id)
+      .in("tipo", ["compra_solicitada", "compra_actualizada"])
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    const notificationsRows = (rows as PurchaseNotification[]) ?? [];
+    const compraIds = [...new Set(notificationsRows.map((item) => item.compra_id).filter(Boolean))] as string[];
+
+    const purchaseStateById = new Map<string, string>();
+    if (compraIds.length > 0) {
+      const { data: compras } = await supabase
+        .from("compras")
+        .select("id, estado")
+        .in("id", compraIds);
+
+      for (const compra of compras ?? []) {
+        purchaseStateById.set(compra.id, compra.estado);
+      }
+    }
+
+    const active: PurchaseNotification[] = [];
+    const history: PurchaseNotification[] = [];
+
+    for (const item of notificationsRows) {
+      if (!item.compra_id) {
+        active.push(item);
+        continue;
+      }
+
+      const compraEstado = purchaseStateById.get(item.compra_id);
+      if (!compraEstado || compraEstado === "PENDIENTE") {
+        active.push(item);
+      } else {
+        history.push(item);
+      }
+    }
+
+    setNotifications(active);
+    setHistoryNotifications(history.slice(0, 10));
+  };
 
   useEffect(() => {
     if (!user) {
       setNotifications([]);
+      setHistoryNotifications([]);
       return;
     }
 
     let active = true;
+
     const load = async () => {
-      const { data: rows } = await supabase
-        .from("notificaciones")
-        .select("id, compra_id, mensaje, tipo, leido, created_at")
-        .eq("user_id", user.id)
-        .in("tipo", ["compra_solicitada", "compra_actualizada"])
-        .order("created_at", { ascending: false })
-        .limit(20);
-
-      const notificationsRows = (rows as PurchaseNotification[]) ?? [];
-      const compraIds = notificationsRows
-        .map((item) => item.compra_id)
-        .filter((value): value is string => Boolean(value));
-
-      let purchaseStateById = new Map<string, string>();
-      if (compraIds.length > 0) {
-        const { data: compras } = await supabase
-          .from("compras")
-          .select("id, estado")
-          .in("id", compraIds);
-
-        for (const compra of compras ?? []) {
-          purchaseStateById.set(compra.id, compra.estado);
-        }
-      }
-
-      const filtered = notificationsRows.filter((item) => {
-        if (!item.compra_id) return true;
-        const compraEstado = purchaseStateById.get(item.compra_id);
-        return !compraEstado || compraEstado === "PENDIENTE";
-      });
-
-      if (active) setNotifications(filtered);
+      if (!active) return;
+      await refresh();
     };
 
     void load();
@@ -64,7 +88,7 @@ export function usePurchaseNotifications() {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "notificaciones", filter: `user_id=eq.${user.id}` },
-        () => void load(),
+        () => void refresh(),
       )
       .subscribe();
 
@@ -87,10 +111,9 @@ export function usePurchaseNotifications() {
     }
 
     await supabase.from("notificaciones").update({ leido: true }).eq("id", notification.id);
-
-    setNotifications((current) => current.filter((item) => item.id !== notification.id));
+    await refresh();
     toast.success(estado === "CONFIRMADA" ? "Compra aceptada" : "Solicitud rechazada");
   };
 
-  return { notifications, decidePurchase };
+  return { notifications, historyNotifications, decidePurchase };
 }
