@@ -231,6 +231,22 @@ Deno.serve(async (req) => {
       });
     }
 
+    const authenticatedEmail = userData.user.email?.trim().toLowerCase();
+    if (!authenticatedEmail) {
+      return new Response(JSON.stringify({ ok: false, error: "ACCOUNT_EMAIL_REQUIRED" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: isActive, error: activeUserError } = await supabase.rpc("is_current_user_active");
+    if (activeUserError || isActive !== true) {
+      return new Response(JSON.stringify({ ok: false, error: "ACCOUNT_BLOCKED" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const normalized = validation.normalized;
     const adminClient = createClient(url, serviceRoleKey, {
       auth: {
@@ -239,12 +255,32 @@ Deno.serve(async (req) => {
       },
     });
 
+    const { count: recentTickets, error: rateLimitError } = await adminClient
+      .from("support_tickets")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userData.user.id)
+      .gte("created_at", new Date(Date.now() - 60_000).toISOString());
+
+    if (rateLimitError) {
+      return new Response(JSON.stringify({ ok: false, error: "RATE_LIMIT_CHECK_FAILED" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if ((recentTickets ?? 0) > 0) {
+      return new Response(JSON.stringify({ ok: false, error: "TOO_MANY_REQUESTS" }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { data: ticket, error: insertError } = await adminClient
       .from("support_tickets")
       .insert({
         user_id: userData.user.id,
         name: normalized.name,
-        email: normalized.email,
+        email: authenticatedEmail,
         category: normalized.category,
         subject: normalized.subject,
         description: normalized.description,
@@ -290,7 +326,7 @@ Deno.serve(async (req) => {
         });
 
         await sendResendEmail({
-          to: normalized.email,
+          to: authenticatedEmail,
           from: fromEmail,
           subject: "Hemos recibido tu solicitud de soporte",
           html: formatConfirmationHtml(ticketNumber, ticket.created_at),
