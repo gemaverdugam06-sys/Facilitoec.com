@@ -134,7 +134,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!active) return;
 
         const roles = Array.isArray(data)
-          ? data.map((row) => row?.role).filter((role): role is string => Boolean(role))
+          ? data
+              .map((row) => row?.role)
+              .filter((role): role is "admin" | "moderator" | "user" => Boolean(role))
           : [];
 
         setIsAdmin(!error && roles.includes("admin"));

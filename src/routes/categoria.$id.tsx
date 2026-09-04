@@ -46,7 +46,7 @@ function CategoriaPage() {
       .select("id, nombre, icono")
       .order("orden")
       .then(({ data }) => {
-        if (data) setCategorias(data);
+        if (data) setCategorias(data.map((categoria) => ({ ...categoria, icono: categoria.icono ?? "" })));
       });
   }, []);
 

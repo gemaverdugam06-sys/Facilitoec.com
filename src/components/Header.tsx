@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
-import { Plus, MessageCircle, User, LogOut, Globe, ShieldCheck, Bell } from "lucide-react";
+import { Plus, MessageCircle, User, LogOut, Globe, ShieldCheck, Bell, ShoppingBag } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useUnreadChats } from "@/hooks/use-unread";
 import { useAdminNotifications } from "@/hooks/use-admin-notifications";
+import { usePurchaseNotifications } from "@/hooks/use-purchase-notifications";
 
 export function Header() {
   const { user, signOut, isAdmin, roleLoading } = useAuth();
@@ -21,6 +22,7 @@ export function Header() {
   const navigate = useNavigate();
   const { total: unread } = useUnreadChats();
   const { pendingProducts } = useAdminNotifications();
+  const { notifications: purchaseNotifications, decidePurchase } = usePurchaseNotifications();
 
   return (
     <motion.header
@@ -61,6 +63,36 @@ export function Header() {
                   )}
                 </Link>
               </Button>
+
+              {purchaseNotifications.length > 0 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="relative" aria-label="Solicitudes de compra">
+                      <ShoppingBag className="h-5 w-5" />
+                      <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                        {purchaseNotifications.length}
+                      </span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-80">
+                    {purchaseNotifications.map((notification) => (
+                      <DropdownMenuItem key={notification.id} className="flex-col items-stretch gap-2">
+                        <span className="text-sm">{notification.mensaje}</span>
+                        {notification.tipo === "compra_solicitada" && (
+                          <span className="flex gap-2">
+                            <Button size="sm" onClick={() => void decidePurchase(notification, "CONFIRMADA")}>
+                              Aceptar
+                            </Button>
+                            <Button size="sm" variant="destructive" onClick={() => void decidePurchase(notification, "CANCELADA")}>
+                              Rechazar
+                            </Button>
+                          </span>
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
 
               {!roleLoading && isAdmin && (
                 <Button

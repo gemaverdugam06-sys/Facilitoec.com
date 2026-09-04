@@ -67,7 +67,7 @@ function Home() {
         if (error) throw error;
 
         if (data) {
-          setCategorias(data);
+          setCategorias(data.map((categoria) => ({ ...categoria, icono: categoria.icono ?? "" })));
         }
       } catch (err) {
         console.error("Error cargando categorías:", err);

@@ -85,6 +85,7 @@ function MisPubs() {
           titulo,
           descripcion,
           precio,
+          moneda,
           imagenes,
           activo,
           created_at,
@@ -106,11 +107,11 @@ function MisPubs() {
 
       if (joinErr) throw joinErr;
 
-      const listaProductos = (productsWithTx || []).map((p: any) => {
+      const listaProductos = (productsWithTx || []).map((p) => {
         const transacciones = Array.isArray(p.transacciones) ? p.transacciones : [];
-        const latestTx = transacciones.reduce((latest: any, current: any) => {
+        const latestTx = transacciones.reduce<(typeof transacciones)[number] | null>((latest, current) => {
           if (!latest) return current;
-          return new Date(current.created_at).getTime() > new Date(latest.created_at).getTime()
+          return new Date(current.created_at ?? 0).getTime() > new Date(latest.created_at ?? 0).getTime()
             ? current
             : latest;
         }, null);
@@ -122,6 +123,7 @@ function MisPubs() {
           titulo: p.titulo,
           descripcion: p.descripcion,
           precio: p.precio,
+          moneda: p.moneda,
           imagenes: p.imagenes,
           activo: p.activo,
           created_at: p.created_at,

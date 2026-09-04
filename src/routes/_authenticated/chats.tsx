@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Archive, ArchiveRestore, Loader2, Trash2 } from "lucide-react";
 import { useUnreadChats } from "@/hooks/use-unread";
 import { toUserMessage } from "@/lib/error-messages";
+import { useSignedUrls } from "@/lib/storage";
 import type { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 
@@ -46,6 +47,17 @@ function ChatsPage() {
   const [archivedChatIds, setArchivedChatIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState<string | null>(null);
+  const avatarPaths = [
+    ...new Set(
+      chats
+        .flatMap((chat) => [chat.comprador?.avatar_url, chat.vendedor?.avatar_url])
+        .filter((path): path is string => Boolean(path)),
+    ),
+  ];
+  const avatarUrls = useSignedUrls("avatars", avatarPaths);
+  const avatarUrlByPath = new Map(
+    avatarPaths.map((path, index) => [path, avatarUrls[index] ?? ""]),
+  );
 
   const cargarChats = async () => {
     if (!user) return;
@@ -197,7 +209,13 @@ function ChatsPage() {
                             >
                               <CardContent className="flex items-center gap-3 p-3">
                                 <Avatar>
-                                  <AvatarImage src={other?.avatar_url ?? undefined} />
+                                  <AvatarImage
+                                    src={
+                                      other?.avatar_url
+                                        ? avatarUrlByPath.get(other.avatar_url) || undefined
+                                        : undefined
+                                    }
+                                  />
                                   <AvatarFallback>
                                     {other?.nombre_completo?.[0] ?? "?"}
                                   </AvatarFallback>

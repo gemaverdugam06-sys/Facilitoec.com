@@ -7,7 +7,7 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, Send, Loader2, ShoppingBag, Star } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { toUserMessage } from "@/lib/error-messages";
 import { useSignedUrls } from "@/lib/storage";
@@ -35,6 +35,12 @@ interface ChatInfo {
   productos: { id: string; titulo: string } | null;
 }
 
+interface CompraChat {
+  id: string;
+  estado: string;
+  producto_id: string;
+}
+
 export const Route = createFileRoute("/_authenticated/chat/$chatId")({
   component: ChatPage,
 });
@@ -45,13 +51,18 @@ function ChatPage() {
   const { t } = useI18n();
   const nav = useNavigate();
   const [info, setInfo] = useState<ChatInfo | null>(null);
+  const [compra, setCompra] = useState<CompraChat | null>(null);
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [texto, setTexto] = useState("");
   const [loading, setLoading] = useState(true);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const avatarPaths = [
-    ...new Set(mensajes.map((mensaje) => mensaje.avatar_remitente).filter(Boolean)),
+    ...new Set(
+      mensajes
+        .map((mensaje) => mensaje.avatar_remitente)
+        .filter((path): path is string => Boolean(path)),
+    ),
   ];
   const avatarUrls = useSignedUrls("avatars", avatarPaths);
   const avatarUrlByPath = new Map(
@@ -106,8 +117,18 @@ function ChatPage() {
       .select("id, comprador_id, vendedor_id, producto_id, productos:producto_id (id, titulo)")
       .eq("id", chatId)
       .maybeSingle()
-      .then(({ data }) => {
-        if (data) setInfo(data as unknown as ChatInfo);
+      .then(async ({ data }) => {
+        if (!data) return;
+        const chat = data as unknown as ChatInfo;
+        setInfo(chat);
+        const { data: purchase } = await supabase
+          .from("compras")
+          .select("id, estado, producto_id")
+          .eq("producto_id", chat.producto_id ?? "")
+          .eq("comprador_id", chat.comprador_id)
+          .eq("vendedor_id", chat.vendedor_id)
+          .maybeSingle();
+        if (purchase) setCompra(purchase);
       });
 
     // Carga inicial de mensajes
@@ -115,7 +136,7 @@ function ChatPage() {
 
     // Realtime actualiza tanto mensajes nuevos como sus recibos de entrega/lectura.
     const ch = supabase
-      .channel(`chat-${chatId}`)
+      .channel(`chat:${chatId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "mensajes", filter: `chat_id=eq.${chatId}` },
@@ -298,6 +319,25 @@ function ChatPage() {
           )}
         </div>
       </div>
+
+      {compra && info?.productos && (
+        <div className="border-b bg-muted/30">
+          <div className="container mx-auto flex max-w-2xl items-center gap-2 px-4 py-2 text-sm">
+            <ShoppingBag className="h-4 w-4 text-primary" />
+            <span className="truncate">{info.productos.titulo}</span>
+            <span className="text-muted-foreground">Compra: {compra.estado}</span>
+            {user?.id === info.comprador_id && compra.estado === "CONFIRMADA" && (
+              <Link
+                to="/reseña/$transaccionId"
+                params={{ transaccionId: compra.id }}
+                className="ml-auto flex shrink-0 items-center gap-1 text-primary hover:underline"
+              >
+                <Star className="h-4 w-4" /> Calificar vendedor
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto">
         <div className="container mx-auto max-w-2xl space-y-2 px-4 py-4">

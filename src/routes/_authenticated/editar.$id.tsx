@@ -37,9 +37,9 @@ function EditarPage() {
       .then(({ data }) => {
         if (data) {
           setTitulo(data.titulo);
-          setDescripcion(data.descripcion);
+          setDescripcion(data.descripcion ?? "");
           setPrecio(String(data.precio));
-          setCiudad(data.ciudad);
+          setCiudad(data.ciudad ?? "");
           setWhatsapp(data.whatsapp ?? "");
         }
         setLoading(false);

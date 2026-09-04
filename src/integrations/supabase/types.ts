@@ -22,6 +22,7 @@ export type Database = {
           estado: string
           id: string
           producto_id: string
+          updated_at: string
           vendedor_id: string
         }
         Insert: {
@@ -31,6 +32,7 @@ export type Database = {
           estado?: string
           id?: string
           producto_id: string
+          updated_at?: string
           vendedor_id: string
         }
         Update: {
@@ -40,6 +42,7 @@ export type Database = {
           estado?: string
           id?: string
           producto_id?: string
+          updated_at?: string
           vendedor_id?: string
         }
         Relationships: [
@@ -319,24 +322,30 @@ export type Database = {
       }
       notificaciones: {
         Row: {
+          compra_id: string | null
           created_at: string | null
           id: string
           leido: boolean | null
           mensaje: string
+          tipo: string
           user_id: string | null
         }
         Insert: {
+          compra_id?: string | null
           created_at?: string | null
           id?: string
           leido?: boolean | null
           mensaje: string
+          tipo?: string
           user_id?: string | null
         }
         Update: {
+          compra_id?: string | null
           created_at?: string | null
           id?: string
           leido?: boolean | null
           mensaje?: string
+          tipo?: string
           user_id?: string | null
         }
         Relationships: [

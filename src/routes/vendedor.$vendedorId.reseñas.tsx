@@ -55,11 +55,18 @@ function ReseñasVendedor() {
           .single();
 
         if (vendedorError) throw vendedorError;
-        setVendedor(vendedorData as VendedorStats);
+        setVendedor({
+          id: vendedorData.id ?? vendedorId,
+          nombre_completo: vendedorData.nombre_completo,
+          avatar_url: vendedorData.avatar_url,
+          ciudad: vendedorData.ciudad,
+          total_reseñas: Number(vendedorData.total_resenas ?? 0),
+          promedio_calificacion: Number(vendedorData.promedio_calificacion ?? 0),
+        });
 
         // Load reviews
         const { data: reseñasData, error: reseñasError } = await supabase
-          .from("reseñas_vendedores")
+          .from("resenas_vendedores")
           .select(
             `
             id,
@@ -75,7 +82,13 @@ function ReseñasVendedor() {
           .order("created_at", { ascending: false });
 
         if (reseñasError) throw reseñasError;
-        setReseñas((reseñasData as Reseña[]) ?? []);
+        setReseñas(
+          (reseñasData ?? []).map((review) => ({
+            ...review,
+            created_at: review.created_at ?? new Date().toISOString(),
+            profiles: Array.isArray(review.profiles) ? review.profiles[0] ?? null : review.profiles,
+          })),
+        );
       } catch (error) {
         console.error("Error loading reviews:", error);
       } finally {
