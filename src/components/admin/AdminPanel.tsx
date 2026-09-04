@@ -48,6 +48,17 @@ interface Tx {
   profiles: { nombre_completo: string | null } | null;
 }
 
+interface Compra {
+  id: string;
+  comprador_id: string;
+  vendedor_id: string;
+  producto_id: string;
+  estado: string;
+  created_at: string;
+  confirmed_at: string | null;
+  productos: { titulo: string } | null;
+}
+
 interface ProductoPendiente {
   id: string;
   titulo: string;
@@ -255,6 +266,7 @@ function ProductoModerationCard({
 export function AdminPanel() {
   const { user } = useAuth();
   const [txs, setTxs] = useState<Tx[]>([]);
+  const [compras, setCompras] = useState<Compra[]>([]);
   const [productosPendientes, setProductosPendientes] = useState<ProductoPendiente[]>([]);
   const [reportes, setReportes] = useState<Reporte[]>([]);
   const [reseniasReportadas, setReseniasReportadas] = useState<ReportedReview[]>([]);
@@ -274,6 +286,7 @@ export function AdminPanel() {
   useEffect(() => {
     if (user) {
       loadTransactions();
+      loadCompras();
       loadProductosPendientes();
       loadReportes();
       loadReseniasReportadas();
@@ -303,6 +316,34 @@ export function AdminPanel() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadCompras = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("compras")
+        .select("id, comprador_id, vendedor_id, producto_id, estado, created_at, confirmed_at, productos(titulo)")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      setCompras((data as unknown as Compra[]) ?? []);
+    } catch {
+      toast.error("No se pudieron cargar las compras");
+    }
+  };
+
+  const updateCompra = async (compra: Compra, estado: "CONFIRMADA" | "CANCELADA") => {
+    setWorking(compra.id);
+    const { error } = await supabase
+      .from("compras")
+      .update({ estado, confirmed_at: estado === "CONFIRMADA" ? new Date().toISOString() : null })
+      .eq("id", compra.id);
+    setWorking(null);
+    if (error) {
+      toast.error("No se pudo actualizar la compra");
+      return;
+    }
+    toast.success(estado === "CONFIRMADA" ? "Compra confirmada" : "Compra cancelada");
+    await loadCompras();
   };
 
   const loadProductosPendientes = async () => {
@@ -353,7 +394,7 @@ export function AdminPanel() {
   const loadReseniasReportadas = async () => {
     try {
       const { data, error } = await supabase
-        .from("reseñas_vendedores")
+        .from("resenas_vendedores")
         .select("*")
         .eq("estado", "reportado")
         .order("created_at", { ascending: false });
@@ -641,7 +682,7 @@ export function AdminPanel() {
     setWorking(resenaId);
     try {
       const { error } = await supabase
-        .from("reseñas_vendedores")
+        .from("resenas_vendedores")
         .update({ estado: "oculto" })
         .eq("id", resenaId);
 
@@ -680,7 +721,7 @@ export function AdminPanel() {
 
     setWorking(resenaId);
     try {
-      const { error } = await supabase.from("reseñas_vendedores").delete().eq("id", resenaId);
+      const { error } = await supabase.from("resenas_vendedores").delete().eq("id", resenaId);
       if (error) throw error;
       toast.success("Reseña eliminada");
       await loadReseniasReportadas();
@@ -775,8 +816,9 @@ export function AdminPanel() {
           </div>
         ) : (
           <Tabs defaultValue="transacciones" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="transacciones">Transacciones ({pendientes.length})</TabsTrigger>
+              <TabsTrigger value="compras">Compras ({compras.filter((c) => c.estado === "PENDIENTE").length})</TabsTrigger>
               <TabsTrigger value="moderacion">Productos ({productosPendientes.length})</TabsTrigger>
               <TabsTrigger value="reportes">Reportes ({reportesPendientes.length})</TabsTrigger>
               <TabsTrigger value="resenias">Reseñas ({reseniasReportadas.length})</TabsTrigger>
@@ -784,6 +826,40 @@ export function AdminPanel() {
                 Usuarios ({usuarios.filter((u) => u.is_blocked).length})
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="compras" className="space-y-4">
+              {compras.length === 0 ? (
+                <p className="rounded-lg border border-dashed bg-muted/30 p-6 text-center text-sm text-muted-foreground">
+                  Sin solicitudes de compra
+                </p>
+              ) : (
+                compras.map((compra) => (
+                  <Card key={compra.id}>
+                    <CardContent className="space-y-2 p-4">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant={compra.estado === "CONFIRMADA" ? "default" : compra.estado === "CANCELADA" ? "destructive" : "outline"}>
+                          {compra.estado}
+                        </Badge>
+                        <span className="font-semibold">{compra.productos?.titulo ?? "Producto"}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Comprador: {compra.comprador_id} · Vendedor: {compra.vendedor_id}
+                      </p>
+                      {compra.estado === "PENDIENTE" && (
+                        <div className="flex gap-2">
+                          <Button size="sm" disabled={working === compra.id} onClick={() => updateCompra(compra, "CONFIRMADA")}>
+                            <ShieldCheck className="mr-1 h-4 w-4" /> Confirmar compra
+                          </Button>
+                          <Button size="sm" variant="destructive" disabled={working === compra.id} onClick={() => updateCompra(compra, "CANCELADA")}>
+                            <ShieldX className="mr-1 h-4 w-4" /> Cancelar
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </TabsContent>
 
             {/* TRANSACCIONES TAB */}
             <TabsContent value="transacciones" className="space-y-4">

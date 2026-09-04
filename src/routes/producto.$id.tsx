@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   MapPin,
   MessageCircle,
+  ShoppingCart,
   Phone,
   Sparkles,
   ArrowLeft,
@@ -36,6 +37,7 @@ interface Producto {
   ciudad: string;
   imagenes: string[];
   estado: string;
+  estado_moderacion: string;
   whatsapp: string | null;
   es_destacado: boolean;
   user_id: string;
@@ -66,6 +68,9 @@ function ProductoPage() {
   const [loading, setLoading] = useState(true);
   const [idx, setIdx] = useState(0);
   const [vendorStats, setVendorStats] = useState<VendorStats | null>(null);
+  const [reviewTransactionId, setReviewTransactionId] = useState<string | null>(null);
+  const [purchaseStatus, setPurchaseStatus] = useState<string | null>(null);
+  const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [recentReviews, setRecentReviews] = useState<any[]>([]);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -93,13 +98,23 @@ function ProductoPage() {
 
     const loadProducto = async () => {
       try {
-        const { data, error } = await supabase
+        let productoQuery = supabase
           .from("productos")
           .select("*, profiles!productos_user_profile_fk(nombre_completo, avatar_url, ciudad)")
           .eq("id", id)
-          .eq("activo", true)
-          .eq("estado_moderacion", "aprobado")
-          .maybeSingle();
+          .eq("activo", true);
+
+        // Public users only see approved listings. The owner can still review
+        // their own pending/rejected listing after publishing it.
+        if (isAdmin) {
+          productoQuery = productoQuery;
+        } else if (user?.id) {
+          productoQuery = productoQuery.or(`estado_moderacion.eq.aprobado,user_id.eq.${user.id}`);
+        } else {
+          productoQuery = productoQuery.eq("estado_moderacion", "aprobado");
+        }
+
+        const { data, error } = await productoQuery.maybeSingle();
 
         if (!active) return;
 
@@ -122,13 +137,19 @@ function ProductoPage() {
               .eq("id", producto.user_id)
               .maybeSingle();
 
-            if (stats) setVendorStats(stats as VendorStats);
+            if (stats) {
+              setVendorStats({
+                id: stats.id ?? producto.user_id,
+                avg_rating: Number(stats.promedio_calificacion ?? 0),
+                review_count: Number(stats.total_resenas ?? 0),
+              });
+            }
 
             // Get recent reviews (first 3)
             const { data: reviews } = await supabase
-              .from("reseñas_vendedores")
+              .from("resenas_vendedores")
               .select(
-                "*, profiles!reseñas_vendedores_comprador_id_fkey(nombre_completo, avatar_url)",
+                "*, profiles!resenas_vendedores_comprador_id_fkey(nombre_completo, avatar_url)",
               )
               .eq("vendedor_id", producto.user_id)
               .eq("estado", "visible")
@@ -136,6 +157,22 @@ function ProductoPage() {
               .limit(3);
 
             if (reviews) setRecentReviews(reviews);
+
+            if (user?.id && user.id !== producto.user_id) {
+              const { data: buyerPurchase } = await supabase
+                .from("compras")
+                .select("id, estado")
+                .eq("producto_id", producto.id)
+                .eq("comprador_id", user.id)
+                .maybeSingle();
+
+              if (buyerPurchase?.id) {
+                setPurchaseStatus(buyerPurchase.estado);
+                if (buyerPurchase.estado === "CONFIRMADA") {
+                  setReviewTransactionId(buyerPurchase.id);
+                }
+              }
+            }
           } catch (err) {
             console.error("Error loading vendor reviews:", err);
           }
@@ -153,7 +190,7 @@ function ProductoPage() {
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, user?.id, isAdmin]);
 
   const isVerified = isUserVerified(user);
 
@@ -206,6 +243,31 @@ function ProductoPage() {
       toast.error("Verifica tu correo electrónico para contactar por WhatsApp");
       return;
     }
+  };
+
+  const requestPurchase = async () => {
+    if (!user) {
+      toast.error("Inicia sesión para solicitar la compra");
+      nav({ to: "/auth" });
+      return;
+    }
+    if (!isVerified || !p || user.id === p.user_id || purchaseStatus || purchaseLoading) return;
+
+    setPurchaseLoading(true);
+    const { data, error } = await supabase
+      .from("compras")
+      .insert({ comprador_id: user.id, vendedor_id: p.user_id, producto_id: p.id })
+      .select("id, estado")
+      .single();
+    setPurchaseLoading(false);
+
+    if (error) {
+      toast.error(toUserMessage(error, "No se pudo solicitar la compra."));
+      return;
+    }
+
+    setPurchaseStatus(data.estado);
+    toast.success("Solicitud de compra enviada. Espera la confirmación.");
   };
 
   if (loading) {
@@ -287,6 +349,12 @@ function ProductoPage() {
 
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
+              {p.estado_moderacion === "pendiente" && (
+                <Badge variant="outline">Producto en revisión</Badge>
+              )}
+              {p.estado_moderacion === "rechazado" && (
+                <Badge variant="destructive">Producto rechazado</Badge>
+              )}
               {p.es_destacado && (
                 <Badge className="bg-gradient-featured text-warning-foreground border-0 gap-1">
                   <Sparkles className="h-3 w-3" /> {t("featured")}
@@ -318,6 +386,23 @@ function ProductoPage() {
               </div>
             </Card>
             <div className="flex flex-col gap-2 sm:flex-row">
+              {user?.id !== p.user_id && (
+                <Button
+                  onClick={requestPurchase}
+                  disabled={!isVerified || Boolean(purchaseStatus) || purchaseLoading}
+                  variant="secondary"
+                  className="flex-1"
+                >
+                  <ShoppingCart className="mr-1 h-4 w-4" />
+                  {purchaseLoading
+                    ? "Solicitando..."
+                    : purchaseStatus === "CONFIRMADA"
+                      ? "Compra confirmada"
+                      : purchaseStatus === "PENDIENTE"
+                        ? "Compra pendiente"
+                        : "Solicitar compra"}
+                </Button>
+              )}
               <motion.div whileHover={{ scale: 1.02 }} className="flex-1 will-change-transform">
                 <Button onClick={startChat} className="flex-1 btn-cta">
                   <MessageCircle className="mr-1 h-4 w-4" /> {t("chat_internal")}
@@ -389,7 +474,17 @@ function ProductoPage() {
             <div className="mt-6 border-t pt-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Opiniones del vendedor</h2>
-                {vendorStats && vendorStats.review_count > 0 && (
+                <div className="flex items-center gap-3">
+                  {reviewTransactionId && (
+                    <Link
+                      to="/reseña/$transaccionId"
+                      params={{ transaccionId: reviewTransactionId }}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Calificar vendedor
+                    </Link>
+                  )}
+                  {vendorStats && vendorStats.review_count > 0 && (
                   <Link
                     to="/vendedor/$vendedorId/reseñas"
                     params={{ vendedorId: p.user_id }}
@@ -397,7 +492,17 @@ function ProductoPage() {
                   >
                     Ver todas ({vendorStats.review_count})
                   </Link>
-                )}
+                  )}
+                  {(!vendorStats || vendorStats.review_count === 0) && (
+                    <Link
+                      to="/vendedor/$vendedorId/reseñas"
+                      params={{ vendedorId: p.user_id }}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Ver reseñas
+                    </Link>
+                  )}
+                </div>
               </div>
 
               {vendorStats ? (

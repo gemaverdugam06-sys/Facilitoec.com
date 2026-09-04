@@ -36,7 +36,7 @@ function PublicarReseñaPage() {
       try {
         // Load transaction
         const { data: tx, error: txError } = await supabase
-          .from("transacciones")
+          .from("compras")
           .select(
             `
             *,
@@ -47,12 +47,14 @@ function PublicarReseñaPage() {
           `,
           )
           .eq("id", transaccionId)
+          .eq("comprador_id", user.id)
+          .eq("estado", "CONFIRMADA")
           .single();
 
         if (txError) throw txError;
         setTransaccion(tx);
 
-        if (tx.productos) {
+        if (tx.productos?.user_id) {
           // Load vendor profile
           const { data: vendedorData } = await supabase
             .from("profiles")
@@ -65,9 +67,9 @@ function PublicarReseñaPage() {
 
         // Check if review already exists
         const { data: existingReview } = await supabase
-          .from("reseñas_vendedores")
+          .from("resenas_vendedores")
           .select("*")
-          .eq("transaccion_id", transaccionId)
+          .eq("compra_id", transaccionId)
           .maybeSingle();
 
         if (existingReview) {
@@ -101,7 +103,7 @@ function PublicarReseñaPage() {
       if (existingReview) {
         // Update existing review
         const { error } = await supabase
-          .from("reseñas_vendedores")
+          .from("resenas_vendedores")
           .update({
             calificacion,
             comentario: comentario || null,
@@ -112,8 +114,8 @@ function PublicarReseñaPage() {
         toast.success("Reseña actualizada");
       } else {
         // Create new review
-        const { error } = await supabase.from("reseñas_vendedores").insert({
-          transaccion_id: transaccionId,
+        const { error } = await supabase.from("resenas_vendedores").insert({
+          compra_id: transaccionId,
           vendedor_id: vendedor.id,
           comprador_id: user.id,
           calificacion,
