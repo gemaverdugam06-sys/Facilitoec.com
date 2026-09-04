@@ -94,8 +94,7 @@ function ReseñasVendedor() {
             calificacion,
             comentario,
             created_at,
-            comprador_id,
-            profiles:comprador_id (nombre_completo, avatar_url)
+            comprador_id
           `,
           )
           .eq("vendedor_id", vendedorId)
@@ -108,11 +107,25 @@ function ReseñasVendedor() {
           return;
         }
 
+        const compradorIds = [...new Set((reseñasData ?? []).map((review) => review.comprador_id))];
+        const profilesById = new Map<string, { nombre_completo: string | null; avatar_url: string | null }>();
+
+        if (compradorIds.length > 0) {
+          const { data: profilesData } = await supabase
+            .from("profiles")
+            .select("id, nombre_completo, avatar_url")
+            .in("id", compradorIds);
+
+          for (const profile of profilesData ?? []) {
+            profilesById.set(profile.id, profile);
+          }
+        }
+
         setReseñas(
           (reseñasData ?? []).map((review) => ({
             ...review,
             created_at: review.created_at ?? new Date().toISOString(),
-            profiles: Array.isArray(review.profiles) ? review.profiles[0] ?? null : review.profiles,
+            profiles: profilesById.get(review.comprador_id) ?? null,
           })),
         );
       } catch (error) {
