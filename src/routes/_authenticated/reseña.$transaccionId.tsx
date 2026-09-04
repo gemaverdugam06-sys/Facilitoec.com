@@ -63,11 +63,11 @@ function PublicarReseñaPage() {
 
         setTransaccion(tx);
 
-        if (tx.productos?.user_id) {
+        if (tx.vendedor_id) {
           const { data: vendedorData, error: vendedorError } = await supabase
             .from("profiles")
             .select("id, nombre_completo, avatar_url")
-            .eq("id", tx.productos.user_id)
+            .eq("id", tx.vendedor_id)
             .maybeSingle();
 
           if (!vendedorError) {
@@ -129,7 +129,7 @@ function PublicarReseñaPage() {
         // Create new review
         const { error } = await supabase.from("resenas_vendedores").insert({
           compra_id: transaccionId,
-          vendedor_id: vendedor.id,
+          vendedor_id: transaccion.vendedor_id,
           comprador_id: user.id,
           calificacion,
           comentario: comentario || null,
