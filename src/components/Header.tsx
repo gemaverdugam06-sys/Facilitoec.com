@@ -115,6 +115,10 @@ export function Header() {
                             <span className="text-sm text-muted-foreground">{notification.mensaje}</span>
                           </DropdownMenuItem>
                         ))}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => navigate({ to: "/mis-publicaciones" })}>
+                          Ver historial completo
+                        </DropdownMenuItem>
                       </>
                     )}
                   </DropdownMenuContent>
