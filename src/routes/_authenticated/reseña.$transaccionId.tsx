@@ -70,9 +70,13 @@ function PublicarReseñaPage() {
             .eq("id", tx.vendedor_id)
             .maybeSingle();
 
-          if (!vendedorError) {
+          if (!vendedorError && vendedorData) {
             setVendedor(vendedorData);
+          } else {
+            setVendedor({ id: tx.vendedor_id, nombre_completo: "Vendedor" });
           }
+        } else {
+          setVendedor(null);
         }
 
         const { data: existingReview, error: reviewError } = await supabase
@@ -194,7 +198,7 @@ function PublicarReseñaPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="rounded-lg bg-muted p-4">
                 <p className="text-sm text-muted-foreground">Producto</p>
-                <p className="font-semibold">{transaccion.productos.titulo}</p>
+                <p className="font-semibold">{transaccion.productos?.titulo ?? "Producto comprado"}</p>
                 <p className="mt-2 text-sm text-muted-foreground">Vendedor</p>
                 <p className="font-semibold">{vendedor.nombre_completo}</p>
               </div>
