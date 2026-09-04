@@ -24,7 +24,7 @@ export function usePurchaseNotifications() {
 
     let active = true;
     const load = async () => {
-      const { data } = await supabase
+      const { data: rows } = await supabase
         .from("notificaciones")
         .select("id, compra_id, mensaje, tipo, leido, created_at")
         .eq("user_id", user.id)
@@ -32,7 +32,30 @@ export function usePurchaseNotifications() {
         .order("created_at", { ascending: false })
         .limit(20);
 
-      if (active) setNotifications((data as PurchaseNotification[]) ?? []);
+      const notificationsRows = (rows as PurchaseNotification[]) ?? [];
+      const compraIds = notificationsRows
+        .map((item) => item.compra_id)
+        .filter((value): value is string => Boolean(value));
+
+      let purchaseStateById = new Map<string, string>();
+      if (compraIds.length > 0) {
+        const { data: compras } = await supabase
+          .from("compras")
+          .select("id, estado")
+          .in("id", compraIds);
+
+        for (const compra of compras ?? []) {
+          purchaseStateById.set(compra.id, compra.estado);
+        }
+      }
+
+      const filtered = notificationsRows.filter((item) => {
+        if (!item.compra_id) return true;
+        const compraEstado = purchaseStateById.get(item.compra_id);
+        return !compraEstado || compraEstado === "PENDIENTE";
+      });
+
+      if (active) setNotifications(filtered);
     };
 
     void load();
@@ -62,6 +85,8 @@ export function usePurchaseNotifications() {
       toast.error("No se pudo actualizar la solicitud");
       return;
     }
+
+    await supabase.from("notificaciones").update({ leido: true }).eq("id", notification.id);
 
     setNotifications((current) => current.filter((item) => item.id !== notification.id));
     toast.success(estado === "CONFIRMADA" ? "Compra aceptada" : "Solicitud rechazada");
