@@ -75,7 +75,8 @@ export default async function handler(req, res) {
 
     // Try to serve static assets
     if (url.startsWith("/assets/")) {
-      const assetPath = join(__dirname, "../dist/client", url);
+      const assetUrl = decodeURIComponent(url.split("?")[0]);
+      const assetPath = join(__dirname, "../dist/client", assetUrl);
       if (serveStatic(assetPath, res)) {
         return;
       }
