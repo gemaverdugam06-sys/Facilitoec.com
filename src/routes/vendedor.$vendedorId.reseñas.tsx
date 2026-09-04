@@ -47,24 +47,45 @@ function ReseñasVendedor() {
     const loadData = async () => {
       setLoading(true);
       try {
-        // Load vendor stats
+        let vendorRow = null;
         const { data: vendedorData, error: vendedorError } = await supabase
           .from("perfil_vendedor_stats")
           .select("*")
           .eq("id", vendedorId)
-          .single();
+          .maybeSingle();
 
-        if (vendedorError) throw vendedorError;
-        setVendedor({
-          id: vendedorData.id ?? vendedorId,
-          nombre_completo: vendedorData.nombre_completo,
-          avatar_url: vendedorData.avatar_url,
-          ciudad: vendedorData.ciudad,
-          total_reseñas: Number(vendedorData.total_resenas ?? 0),
-          promedio_calificacion: Number(vendedorData.promedio_calificacion ?? 0),
-        });
+        if (!vendedorError && vendedorData) {
+          vendorRow = vendedorData;
+        } else {
+          const { data: fallbackProfile, error: fallbackError } = await supabase
+            .from("profiles")
+            .select("id, nombre_completo, avatar_url, ciudad")
+            .eq("id", vendedorId)
+            .maybeSingle();
 
-        // Load reviews
+          if (!fallbackError && fallbackProfile) {
+            vendorRow = {
+              id: fallbackProfile.id ?? vendedorId,
+              nombre_completo: fallbackProfile.nombre_completo,
+              avatar_url: fallbackProfile.avatar_url,
+              ciudad: fallbackProfile.ciudad,
+              total_resenas: 0,
+              promedio_calificacion: 0,
+            };
+          }
+        }
+
+        if (vendorRow) {
+          setVendedor({
+            id: vendorRow.id ?? vendedorId,
+            nombre_completo: vendorRow.nombre_completo,
+            avatar_url: vendorRow.avatar_url,
+            ciudad: vendorRow.ciudad,
+            total_reseñas: Number(vendorRow.total_resenas ?? 0),
+            promedio_calificacion: Number(vendorRow.promedio_calificacion ?? 0),
+          });
+        }
+
         const { data: reseñasData, error: reseñasError } = await supabase
           .from("resenas_vendedores")
           .select(
@@ -81,7 +102,12 @@ function ReseñasVendedor() {
           .eq("estado", "visible")
           .order("created_at", { ascending: false });
 
-        if (reseñasError) throw reseñasError;
+        if (reseñasError) {
+          console.error("Error loading reviews:", reseñasError);
+          setReseñas([]);
+          return;
+        }
+
         setReseñas(
           (reseñasData ?? []).map((review) => ({
             ...review,
@@ -91,6 +117,7 @@ function ReseñasVendedor() {
         );
       } catch (error) {
         console.error("Error loading reviews:", error);
+        setReseñas([]);
       } finally {
         setLoading(false);
       }

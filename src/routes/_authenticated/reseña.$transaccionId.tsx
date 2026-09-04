@@ -34,7 +34,6 @@ function PublicarReseñaPage() {
       if (!user) return;
 
       try {
-        // Load transaction
         const { data: tx, error: txError } = await supabase
           .from("compras")
           .select(
@@ -49,28 +48,42 @@ function PublicarReseñaPage() {
           .eq("id", transaccionId)
           .eq("comprador_id", user.id)
           .eq("estado", "CONFIRMADA")
-          .single();
+          .maybeSingle();
 
-        if (txError) throw txError;
+        if (txError) {
+          console.error("Error loading purchase for review:", txError);
+          setTransaccion(null);
+          return;
+        }
+
+        if (!tx) {
+          setTransaccion(null);
+          return;
+        }
+
         setTransaccion(tx);
 
         if (tx.productos?.user_id) {
-          // Load vendor profile
-          const { data: vendedorData } = await supabase
+          const { data: vendedorData, error: vendedorError } = await supabase
             .from("profiles")
             .select("id, nombre_completo, avatar_url")
             .eq("id", tx.productos.user_id)
-            .single();
+            .maybeSingle();
 
-          setVendedor(vendedorData);
+          if (!vendedorError) {
+            setVendedor(vendedorData);
+          }
         }
 
-        // Check if review already exists
-        const { data: existingReview } = await supabase
+        const { data: existingReview, error: reviewError } = await supabase
           .from("resenas_vendedores")
           .select("*")
           .eq("compra_id", transaccionId)
           .maybeSingle();
+
+        if (reviewError && reviewError.code !== "PGRST116") {
+          console.error("Error loading existing review:", reviewError);
+        }
 
         if (existingReview) {
           setExistingReview(existingReview);
@@ -152,7 +165,15 @@ function PublicarReseñaPage() {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="container mx-auto p-8 text-center">Datos no encontrados.</div>
+        <div className="container mx-auto max-w-xl p-8 text-center">
+          <h1 className="text-xl font-semibold">No se puede acceder a esta reseña</h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Esta compra no está disponible para calificar o ya no existe.
+          </p>
+          <Button className="mt-5" onClick={() => nav({ to: "/" })}>
+            Volver al inicio
+          </Button>
+        </div>
       </div>
     );
   }
