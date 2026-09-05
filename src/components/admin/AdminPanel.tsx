@@ -108,6 +108,8 @@ interface SupportTicket {
   description: string;
   status: string;
   created_at: string;
+  response_text: string | null;
+  responded_at: string | null;
 }
 
 interface UserProfile {
@@ -296,6 +298,7 @@ export function AdminPanel() {
   } | null>(null);
   const [razonSeleccionada, setRazonSeleccionada] = useState("");
   const [notasAdicionales, setNotasAdicionales] = useState("");
+  const [supportReplies, setSupportReplies] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (user) {
@@ -428,7 +431,7 @@ export function AdminPanel() {
       const { data, error } = await supabase
         .from("support_tickets")
         .select(
-          "id, ticket_number, user_id, name, email, category, subject, description, status, created_at",
+          "id, ticket_number, user_id, name, email, category, subject, description, status, created_at, response_text, responded_at",
         )
         .order("created_at", { ascending: false });
 
@@ -760,6 +763,27 @@ export function AdminPanel() {
     }
     toast.success("Ticket eliminado");
     await loadTicketsSoporte();
+  };
+
+  const onResponderTicket = async (ticket: SupportTicket) => {
+    const reply = supportReplies[ticket.id]?.trim() ?? "";
+    if (reply.length < 2) {
+      toast.error("Escribe una respuesta antes de enviarla");
+      return;
+    }
+
+    setWorking(ticket.id);
+    const { data, error } = await supabase.functions.invoke("reply-support-ticket", {
+      body: { ticket_id: ticket.id, reply },
+    });
+    setWorking(null);
+    if (error || data?.error) {
+      toast.error(data?.error ?? error?.message ?? "No se pudo enviar la respuesta");
+      return;
+    }
+    setSupportReplies((current) => ({ ...current, [ticket.id]: "" }));
+    await loadTicketsSoporte();
+    toast.success("Respuesta enviada al usuario");
   };
 
   const onOcultarResena = async (resenaId: string) => {
@@ -1286,7 +1310,32 @@ export function AdminPanel() {
                         {ticket.name} · {ticket.email} · {ticket.category}
                       </p>
                       <p className="whitespace-pre-wrap text-sm">{ticket.description}</p>
+                      {ticket.response_text && (
+                        <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+                          <p className="font-semibold">Respuesta enviada</p>
+                          <p className="mt-1 whitespace-pre-wrap">{ticket.response_text}</p>
+                        </div>
+                      )}
+                      <Textarea
+                        value={supportReplies[ticket.id] ?? ""}
+                        onChange={(event) =>
+                          setSupportReplies((current) => ({
+                            ...current,
+                            [ticket.id]: event.target.value,
+                          }))
+                        }
+                        placeholder="Escribe una respuesta para el usuario..."
+                        maxLength={5000}
+                        rows={3}
+                      />
                       <div className="flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          disabled={working === ticket.id}
+                          onClick={() => void onResponderTicket(ticket)}
+                        >
+                          Enviar respuesta
+                        </Button>
                         {ticket.status === "open" && (
                           <Button
                             size="sm"

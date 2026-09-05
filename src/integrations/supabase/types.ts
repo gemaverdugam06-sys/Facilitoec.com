@@ -790,6 +790,8 @@ export type Database = {
           status: string
           subject: string
           ticket_number: number | null
+          response_text: string | null
+          responded_at: string | null
           updated_at: string
           user_id: string
         }
@@ -816,6 +818,8 @@ export type Database = {
           status?: string
           subject?: string
           ticket_number?: number | null
+          response_text?: string | null
+          responded_at?: string | null
           updated_at?: string
           user_id?: string
         }
