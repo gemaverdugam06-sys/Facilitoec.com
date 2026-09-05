@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ShoppingBag, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { toUserMessage } from "@/lib/error-messages";
+import { validateStrongPassword } from "@/lib/auth-utils";
 
 export const Route = createFileRoute("/auth/nueva-contrasena")({
   head: () => ({
@@ -43,7 +44,8 @@ function NuevaContrasenaPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 8) return toast.error(t("password_min_8"));
+    const passwordError = validateStrongPassword(password);
+    if (passwordError) return toast.error(passwordError);
     if (password !== confirm) return toast.error(t("passwords_mismatch"));
 
     setLoading(true);

@@ -8,6 +8,7 @@ import {
   sendPhoneOtp,
   toE164Phone,
   verifyPhoneOtp,
+  validateStrongPassword,
 } from "@/lib/auth-utils";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { useI18n } from "@/lib/i18n";
@@ -135,8 +136,9 @@ function AuthPage() {
       setSignupMessage(message);
       return toast.error(message);
     }
-    if (password.length < 8) {
-      const message = t("password_min_8");
+    const passwordError = validateStrongPassword(password);
+    if (passwordError) {
+      const message = passwordError;
       setSignupMessage(message);
       return toast.error(message);
     }

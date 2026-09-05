@@ -15,6 +15,17 @@ export function isUserVerified(user: User | null | undefined): boolean {
   return !!(user.email_confirmed_at || user.phone_confirmed_at);
 }
 
+export function validateStrongPassword(password: string): string | null {
+  if (password.length < 8) return "La contraseña debe tener al menos 8 caracteres.";
+  if (!/[a-z]/.test(password)) return "La contraseña debe incluir una letra minúscula.";
+  if (!/[A-Z]/.test(password)) return "La contraseña debe incluir una letra mayúscula.";
+  if (!/\d/.test(password)) return "La contraseña debe incluir un número.";
+  if (!/[^A-Za-z0-9]/.test(password)) {
+    return "La contraseña debe incluir un carácter especial.";
+  }
+  return null;
+}
+
 export async function getUserRole(userId: string): Promise<string | null> {
   if (!userId) return null;
 

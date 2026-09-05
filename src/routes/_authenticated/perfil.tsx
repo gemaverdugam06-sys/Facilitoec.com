@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { toUserMessage } from "@/lib/error-messages";
+import { validateStrongPassword } from "@/lib/auth-utils";
 
 export const Route = createFileRoute("/_authenticated/perfil")({
   component: PerfilPage,
@@ -28,6 +29,10 @@ function PerfilPage() {
   const [avatarPath, setAvatarPath] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
   const avatarUrl = useSignedUrl("avatars", avatarPath);
 
   useEffect(() => {
@@ -102,6 +107,37 @@ function PerfilPage() {
     navigate({ to: "/" });
   };
 
+  const changePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.email) return;
+
+    const passwordError = validateStrongPassword(newPassword);
+    if (passwordError) return toast.error(passwordError);
+    if (newPassword !== confirmNewPassword) {
+      return toast.error("Las contraseñas nuevas no coinciden.");
+    }
+    if (!currentPassword) return toast.error("Ingresa tu contraseña actual.");
+
+    setChangingPassword(true);
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPassword,
+    });
+    if (signInError) {
+      setChangingPassword(false);
+      return toast.error("La contraseña actual no es correcta.");
+    }
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setChangingPassword(false);
+    if (error) return toast.error(toUserMessage(error, "No se pudo cambiar la contraseña."));
+
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmNewPassword("");
+    toast.success("Contraseña actualizada correctamente.");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -160,6 +196,63 @@ function PerfilPage() {
               </div>
               <Button type="submit" disabled={saving} className="w-full bg-gradient-primary">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : t("update_profile")}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+        <Card className="mt-6 border border-slate-200 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+          <CardHeader className="border-b border-slate-200 bg-white/95">
+            <CardTitle className="text-slate-900">Cambiar contraseña</CardTitle>
+          </CardHeader>
+          <CardContent className="bg-white">
+            <form onSubmit={changePassword} className="space-y-3">
+              <div className="space-y-1">
+                <Label htmlFor="current-password">Contraseña actual</Label>
+                <Input
+                  id="current-password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="new-password">Nueva contraseña</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="confirm-new-password">Confirmar nueva contraseña</Label>
+                <Input
+                  id="confirm-new-password"
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Usa al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter
+                especial.
+              </p>
+              <Button
+                type="submit"
+                disabled={changingPassword}
+                className="w-full bg-gradient-primary"
+              >
+                {changingPassword ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Cambiar contraseña"
+                )}
               </Button>
             </form>
           </CardContent>
