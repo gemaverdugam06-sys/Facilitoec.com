@@ -7,7 +7,16 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, Send, Loader2, ShoppingBag, Star } from "lucide-react";
+import {
+  ArrowLeft,
+  ExternalLink,
+  Loader2,
+  Send,
+  ShoppingBag,
+  Star,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { toUserMessage } from "@/lib/error-messages";
 import { useSignedUrls } from "@/lib/storage";
@@ -56,7 +65,14 @@ function ChatPage() {
   const [texto, setTexto] = useState("");
   const [loading, setLoading] = useState(true);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.localStorage.getItem("winfast-chat-sound") !== "off";
+  });
   const scrollRef = useRef<HTMLDivElement>(null);
+  const messageIdsRef = useRef<Set<string> | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const soundEnabledRef = useRef(soundEnabled);
   const avatarPaths = [
     ...new Set(
       mensajes
@@ -68,6 +84,37 @@ function ChatPage() {
   const avatarUrlByPath = new Map(
     avatarPaths.map((path, index) => [path, avatarUrls[index] ?? ""]),
   );
+
+  const reproducirTono = () => {
+    if (!soundEnabledRef.current || typeof window === "undefined") return;
+
+    const AudioContextClass =
+      window.AudioContext ??
+      (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const audioContext = audioContextRef.current ?? new AudioContextClass();
+    audioContextRef.current = audioContext;
+    if (audioContext.state === "suspended") void audioContext.resume();
+
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(660, audioContext.currentTime);
+    oscillator.frequency.setValueAtTime(880, audioContext.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.08, audioContext.currentTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.18);
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.18);
+  };
+
+  useEffect(() => {
+    soundEnabledRef.current = soundEnabled;
+    window.localStorage.setItem("winfast-chat-sound", soundEnabled ? "on" : "off");
+  }, [soundEnabled]);
 
   // Función dedicada a traer los mensajes actualizados de la base de datos
   const refrescarMensajes = async () => {
@@ -99,13 +146,17 @@ function ChatPage() {
       }
     }
 
-    setMensajes(
-      mensajesBase.map((mensaje) => ({
-        ...mensaje,
-        nombre_remitente: perfilesMap.get(mensaje.remitente_id)?.nombre ?? null,
-        avatar_remitente: perfilesMap.get(mensaje.remitente_id)?.avatar ?? null,
-      })),
+    const mensajesActualizados = mensajesBase.map((mensaje) => ({
+      ...mensaje,
+      nombre_remitente: perfilesMap.get(mensaje.remitente_id)?.nombre ?? null,
+      avatar_remitente: perfilesMap.get(mensaje.remitente_id)?.avatar ?? null,
+    }));
+    const nuevosMensajesEntrantes = mensajesActualizados.some(
+      (mensaje) => mensaje.remitente_id !== user?.id && !messageIdsRef.current?.has(mensaje.id),
     );
+    if (messageIdsRef.current && nuevosMensajesEntrantes) reproducirTono();
+    messageIdsRef.current = new Set(mensajesActualizados.map((mensaje) => mensaje.id));
+    setMensajes(mensajesActualizados);
   };
 
   useEffect(() => {
@@ -305,18 +356,33 @@ function ChatPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           {info?.productos ? (
-            <Link
-              to="/producto/$id"
-              params={{ id: info.productos.id }}
-              className="truncate text-sm font-semibold hover:underline"
-            >
-              {info.productos.titulo}
-            </Link>
+            <>
+              <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+                {info.productos.titulo}
+              </span>
+              <Button variant="outline" size="sm" asChild className="shrink-0">
+                <Link to="/producto/$id" params={{ id: info.productos.id }}>
+                  <ExternalLink className="mr-1 h-4 w-4" />
+                  Ver publicación
+                </Link>
+              </Button>
+            </>
           ) : (
             <span className="truncate text-sm font-semibold text-muted-foreground">
               Producto ya no disponible
             </span>
           )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="shrink-0"
+            aria-label={soundEnabled ? "Desactivar sonido" : "Activar sonido"}
+            title={soundEnabled ? "Desactivar sonido" : "Activar sonido"}
+            onClick={() => setSoundEnabled((enabled) => !enabled)}
+          >
+            {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+          </Button>
         </div>
       </div>
 
