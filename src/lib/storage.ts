@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const cache = new Map<string, { url: string; expires: number }>();
 const STORAGE_TTL_SECONDS = 60 * 60 * 24 * 7;
+const PUBLIC_BUCKETS = new Set(["productos"]);
 
 const isExternalUrl = (value: string) => /^https?:\/\//i.test(value);
 
@@ -18,6 +19,11 @@ async function resolveStorageUrl(bucket: string, path: string): Promise<string |
   const normalized = normalizeStoragePath(path);
   if (!normalized) return null;
   if (isExternalUrl(normalized)) return normalized;
+
+  if (PUBLIC_BUCKETS.has(bucket)) {
+    const { data } = supabase.storage.from(bucket).getPublicUrl(normalized);
+    return data?.publicUrl || null;
+  }
 
   try {
     const { data, error } = await supabase.storage
@@ -64,6 +70,17 @@ export function useSignedUrls(bucket: string, paths: string[] | null | undefined
     const need: string[] = [];
     const resolved: (string | null)[] = safePaths.map((p) => {
       if (isExternalUrl(p)) return p;
+      if (PUBLIC_BUCKETS.has(bucket)) {
+        const { data } = supabase.storage.from(bucket).getPublicUrl(p);
+        const publicUrl = data?.publicUrl ?? null;
+        if (publicUrl) {
+          cache.set(`${bucket}:${p}`, {
+            url: publicUrl,
+            expires: Date.now() + 24 * 60 * 60 * 1000,
+          });
+        }
+        return publicUrl;
+      }
       const c = cache.get(`${bucket}:${p}`);
       if (c && c.expires > now) return c.url;
       need.push(p);
