@@ -730,7 +730,7 @@ export function AdminPanel() {
   const onEliminarCompra = async (compraId: string) => {
     if (!window.confirm("¿Deseas eliminar esta compra del historial?")) return;
     setWorking(compraId);
-    const { error } = await supabase.from("compras").delete().eq("id", compraId);
+    const { error } = await supabase.rpc("admin_delete_purchase", { _purchase_id: compraId });
     setWorking(null);
     if (error) {
       toast.error("No se pudo eliminar la compra");

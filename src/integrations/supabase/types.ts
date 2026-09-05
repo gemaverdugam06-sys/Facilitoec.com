@@ -932,6 +932,7 @@ export type Database = {
             Returns: boolean
           }
         | { Args: { _role: string; _user_id: string }; Returns: boolean }
+      admin_delete_purchase: { Args: { _purchase_id: string }; Returns: undefined }
       is_user_blocked: { Args: { _user_id: string }; Returns: boolean }
       mark_messages_delivered: {
         Args: { _message_ids: string[] }
