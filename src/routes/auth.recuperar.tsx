@@ -37,7 +37,11 @@ function RecuperarPage() {
         status >= 500 || String(error.message ?? "") === "{}"
           ? "Supabase no pudo enviar el correo. Verifica el proveedor de correo de Supabase y que esta URL de Vercel esté permitida en Authentication > URL Configuration."
           : "No se pudo enviar el enlace de recuperación.";
-      toast.error(toUserMessage(error, fallback));
+      toast.error(
+        status >= 500 || String(error.message ?? "") === "{}"
+          ? fallback
+          : toUserMessage(error, fallback),
+      );
       return;
     }
     setSent(true);
@@ -101,12 +105,6 @@ function RecuperarPage() {
               className="inline-flex items-center gap-1 text-slate-300 hover:underline"
             >
               <ArrowLeft className="h-3 w-3" /> {t("back_to_sign_in")}
-            </Link>
-          </p>
-          <p className="mt-2 text-center text-xs text-slate-400">
-            {t("phone_recovery_hint")}{" "}
-            <Link to="/auth" className="text-slate-300 underline">
-              {t("sign_in_with_phone")}
             </Link>
           </p>
         </CardContent>
