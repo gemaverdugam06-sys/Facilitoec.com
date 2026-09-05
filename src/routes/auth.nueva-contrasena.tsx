@@ -51,7 +51,8 @@ function NuevaContrasenaPage() {
     setLoading(false);
     if (error) return toast.error(toUserMessage(error, "No se pudo actualizar la contraseña."));
     toast.success(t("password_updated"));
-    nav({ to: "/", replace: true });
+    await supabase.auth.signOut();
+    nav({ to: "/auth", replace: true });
   };
 
   if (authLoading) {
