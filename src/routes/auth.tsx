@@ -338,9 +338,13 @@ function AuthPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="pwd-in">{t("password")}</Label>
-                    <Link to="/auth/recuperar" className="text-xs text-primary hover:underline">
+                    <button
+                      type="button"
+                      onClick={() => nav({ to: "/auth/recuperar" })}
+                      className="text-xs text-primary hover:underline"
+                    >
                       {t("forgot_password")}
-                    </Link>
+                    </button>
                   </div>
                   <div className="relative">
                     <Input
