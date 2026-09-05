@@ -97,6 +97,19 @@ interface ReportedReview {
   created_at: string;
 }
 
+interface SupportTicket {
+  id: string;
+  ticket_number: number | null;
+  user_id: string;
+  name: string;
+  email: string;
+  category: string;
+  subject: string;
+  description: string;
+  status: string;
+  created_at: string;
+}
+
 interface UserProfile {
   id: string;
   nombre_completo: string | null;
@@ -270,6 +283,7 @@ export function AdminPanel() {
   const [productosPendientes, setProductosPendientes] = useState<ProductoPendiente[]>([]);
   const [reportes, setReportes] = useState<Reporte[]>([]);
   const [reseniasReportadas, setReseniasReportadas] = useState<ReportedReview[]>([]);
+  const [ticketsSoporte, setTicketsSoporte] = useState<SupportTicket[]>([]);
   const [usuarios, setUsuarios] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState<string | null>(null);
@@ -290,6 +304,7 @@ export function AdminPanel() {
       loadProductosPendientes();
       loadReportes();
       loadReseniasReportadas();
+      loadTicketsSoporte();
       loadUsuarios();
       loadRazonesPolitica();
     }
@@ -322,7 +337,9 @@ export function AdminPanel() {
     try {
       const { data, error } = await supabase
         .from("compras")
-        .select("id, comprador_id, vendedor_id, producto_id, estado, created_at, confirmed_at, productos(titulo)")
+        .select(
+          "id, comprador_id, vendedor_id, producto_id, estado, created_at, confirmed_at, productos(titulo)",
+        )
         .order("created_at", { ascending: false });
       if (error) throw error;
       setCompras((data as unknown as Compra[]) ?? []);
@@ -403,6 +420,22 @@ export function AdminPanel() {
       setReseniasReportadas((data as unknown as ReportedReview[]) ?? []);
     } catch (err) {
       console.error("Error al cargar reseñas reportadas:", err);
+    }
+  };
+
+  const loadTicketsSoporte = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("support_tickets")
+        .select(
+          "id, ticket_number, user_id, name, email, category, subject, description, status, created_at",
+        )
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setTicketsSoporte((data as SupportTicket[]) ?? []);
+    } catch (err) {
+      console.error("Error al cargar tickets de soporte:", err);
     }
   };
 
@@ -678,6 +711,57 @@ export function AdminPanel() {
     }
   };
 
+  const onEliminarReporte = async (reporteId: string) => {
+    if (!window.confirm("¿Deseas eliminar este reporte?")) return;
+    setWorking(reporteId);
+    const { error } = await supabase.from("reportes").delete().eq("id", reporteId);
+    setWorking(null);
+    if (error) {
+      toast.error("No se pudo eliminar el reporte");
+      return;
+    }
+    toast.success("Reporte eliminado");
+    await loadReportes();
+  };
+
+  const onEliminarCompra = async (compraId: string) => {
+    if (!window.confirm("¿Deseas eliminar esta compra del historial?")) return;
+    setWorking(compraId);
+    const { error } = await supabase.from("compras").delete().eq("id", compraId);
+    setWorking(null);
+    if (error) {
+      toast.error("No se pudo eliminar la compra");
+      return;
+    }
+    toast.success("Compra eliminada");
+    await loadCompras();
+  };
+
+  const onCambiarEstadoTicket = async (ticketId: string, status: "in_progress" | "resolved") => {
+    setWorking(ticketId);
+    const { error } = await supabase.from("support_tickets").update({ status }).eq("id", ticketId);
+    setWorking(null);
+    if (error) {
+      toast.error("No se pudo actualizar el ticket");
+      return;
+    }
+    await loadTicketsSoporte();
+    toast.success("Ticket actualizado");
+  };
+
+  const onEliminarTicket = async (ticketId: string) => {
+    if (!window.confirm("¿Deseas eliminar este ticket de soporte?")) return;
+    setWorking(ticketId);
+    const { error } = await supabase.from("support_tickets").delete().eq("id", ticketId);
+    setWorking(null);
+    if (error) {
+      toast.error("No se pudo eliminar el ticket");
+      return;
+    }
+    toast.success("Ticket eliminado");
+    await loadTicketsSoporte();
+  };
+
   const onOcultarResena = async (resenaId: string) => {
     setWorking(resenaId);
     try {
@@ -816,15 +900,18 @@ export function AdminPanel() {
           </div>
         ) : (
           <Tabs defaultValue="transacciones" className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="transacciones">Transacciones ({pendientes.length})</TabsTrigger>
-              <TabsTrigger value="compras">Compras ({compras.filter((c) => c.estado === "PENDIENTE").length})</TabsTrigger>
+              <TabsTrigger value="compras">
+                Compras ({compras.filter((c) => c.estado === "PENDIENTE").length})
+              </TabsTrigger>
               <TabsTrigger value="moderacion">Productos ({productosPendientes.length})</TabsTrigger>
               <TabsTrigger value="reportes">Reportes ({reportesPendientes.length})</TabsTrigger>
               <TabsTrigger value="resenias">Reseñas ({reseniasReportadas.length})</TabsTrigger>
               <TabsTrigger value="usuarios">
                 Usuarios ({usuarios.filter((u) => u.is_blocked).length})
               </TabsTrigger>
+              <TabsTrigger value="soporte">Soporte ({ticketsSoporte.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="compras" className="space-y-4">
@@ -837,24 +924,52 @@ export function AdminPanel() {
                   <Card key={compra.id}>
                     <CardContent className="space-y-2 p-4">
                       <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant={compra.estado === "CONFIRMADA" ? "default" : compra.estado === "CANCELADA" ? "destructive" : "outline"}>
+                        <Badge
+                          variant={
+                            compra.estado === "CONFIRMADA"
+                              ? "default"
+                              : compra.estado === "CANCELADA"
+                                ? "destructive"
+                                : "outline"
+                          }
+                        >
                           {compra.estado}
                         </Badge>
-                        <span className="font-semibold">{compra.productos?.titulo ?? "Producto"}</span>
+                        <span className="font-semibold">
+                          {compra.productos?.titulo ?? "Producto"}
+                        </span>
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Comprador: {compra.comprador_id} · Vendedor: {compra.vendedor_id}
                       </p>
                       {compra.estado === "PENDIENTE" && (
                         <div className="flex gap-2">
-                          <Button size="sm" disabled={working === compra.id} onClick={() => updateCompra(compra, "CONFIRMADA")}>
+                          <Button
+                            size="sm"
+                            disabled={working === compra.id}
+                            onClick={() => updateCompra(compra, "CONFIRMADA")}
+                          >
                             <ShieldCheck className="mr-1 h-4 w-4" /> Confirmar compra
                           </Button>
-                          <Button size="sm" variant="destructive" disabled={working === compra.id} onClick={() => updateCompra(compra, "CANCELADA")}>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            disabled={working === compra.id}
+                            onClick={() => updateCompra(compra, "CANCELADA")}
+                          >
                             <ShieldX className="mr-1 h-4 w-4" /> Cancelar
                           </Button>
                         </div>
                       )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-destructive hover:text-destructive"
+                        disabled={working === compra.id}
+                        onClick={() => void onEliminarCompra(compra.id)}
+                      >
+                        <Trash2 className="mr-1 h-4 w-4" /> Eliminar historial
+                      </Button>
                     </CardContent>
                   </Card>
                 ))
@@ -1066,6 +1181,15 @@ export function AdminPanel() {
                               </Button>
                             </>
                           )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-destructive hover:text-destructive"
+                            disabled={working === r.id}
+                            onClick={() => void onEliminarReporte(r.id)}
+                          >
+                            <Trash2 className="mr-1 h-4 w-4" /> Eliminar
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -1135,6 +1259,65 @@ export function AdminPanel() {
                     </Card>
                   ))}
                 </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="soporte" className="space-y-4">
+              {ticketsSoporte.length === 0 ? (
+                <p className="rounded-lg border border-dashed bg-muted/30 p-6 text-center text-sm text-muted-foreground">
+                  No hay solicitudes de soporte.
+                </p>
+              ) : (
+                ticketsSoporte.map((ticket) => (
+                  <Card key={ticket.id}>
+                    <CardContent className="space-y-3 p-4">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant={ticket.status === "resolved" ? "default" : "outline"}>
+                          {ticket.status}
+                        </Badge>
+                        <span className="font-semibold">
+                          Ticket #{ticket.ticket_number ?? "N/A"}: {ticket.subject}
+                        </span>
+                        <span className="ml-auto text-xs text-muted-foreground">
+                          {new Date(ticket.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {ticket.name} · {ticket.email} · {ticket.category}
+                      </p>
+                      <p className="whitespace-pre-wrap text-sm">{ticket.description}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {ticket.status === "open" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={working === ticket.id}
+                            onClick={() => void onCambiarEstadoTicket(ticket.id, "in_progress")}
+                          >
+                            Marcar en proceso
+                          </Button>
+                        )}
+                        {ticket.status !== "resolved" && (
+                          <Button
+                            size="sm"
+                            onClick={() => void onCambiarEstadoTicket(ticket.id, "resolved")}
+                          >
+                            Marcar resuelto
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-destructive hover:text-destructive"
+                          disabled={working === ticket.id}
+                          onClick={() => void onEliminarTicket(ticket.id)}
+                        >
+                          <Trash2 className="mr-1 h-4 w-4" /> Eliminar
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
               )}
             </TabsContent>
 

@@ -779,6 +779,48 @@ export type Database = {
           },
         ]
       }
+      support_tickets: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          email: string
+          id: string
+          name: string
+          status: string
+          subject: string
+          ticket_number: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          email: string
+          id?: string
+          name: string
+          status?: string
+          subject: string
+          ticket_number?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          email?: string
+          id?: string
+          name?: string
+          status?: string
+          subject?: string
+          ticket_number?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

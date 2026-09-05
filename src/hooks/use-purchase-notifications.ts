@@ -67,7 +67,7 @@ export function usePurchaseNotifications() {
     }
 
     setNotifications(active);
-    setHistoryNotifications(history.slice(0, 10));
+    setHistoryNotifications(history);
   };
 
   useEffect(() => {

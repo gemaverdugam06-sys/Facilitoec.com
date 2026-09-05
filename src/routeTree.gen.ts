@@ -23,6 +23,7 @@ import { Route as AuthNuevaContrasenaRouteImport } from './routes/auth.nueva-con
 import { Route as AuthenticatedSoporteRouteImport } from './routes/_authenticated/soporte'
 import { Route as AuthenticatedPublicarRouteImport } from './routes/_authenticated/publicar'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
+import { Route as AuthenticatedNotificacionesRouteImport } from './routes/_authenticated/notificaciones'
 import { Route as AuthenticatedMisPublicacionesRouteImport } from './routes/_authenticated/mis-publicaciones'
 import { Route as AuthenticatedChatsRouteImport } from './routes/_authenticated/chats'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -101,6 +102,12 @@ const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedNotificacionesRoute =
+  AuthenticatedNotificacionesRouteImport.update({
+    id: '/notificaciones',
+    path: '/notificaciones',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMisPublicacionesRoute =
   AuthenticatedMisPublicacionesRouteImport.update({
     id: '/mis-publicaciones',
@@ -155,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/chats': typeof AuthenticatedChatsRoute
   '/mis-publicaciones': typeof AuthenticatedMisPublicacionesRoute
+  '/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/publicar': typeof AuthenticatedPublicarRoute
   '/soporte': typeof AuthenticatedSoporteRoute
@@ -178,6 +186,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminRoute
   '/chats': typeof AuthenticatedChatsRoute
   '/mis-publicaciones': typeof AuthenticatedMisPublicacionesRoute
+  '/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/perfil': typeof AuthenticatedPerfilRoute
   '/publicar': typeof AuthenticatedPublicarRoute
   '/soporte': typeof AuthenticatedSoporteRoute
@@ -203,6 +212,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/chats': typeof AuthenticatedChatsRoute
   '/_authenticated/mis-publicaciones': typeof AuthenticatedMisPublicacionesRoute
+  '/_authenticated/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/publicar': typeof AuthenticatedPublicarRoute
   '/_authenticated/soporte': typeof AuthenticatedSoporteRoute
@@ -228,6 +238,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/chats'
     | '/mis-publicaciones'
+    | '/notificaciones'
     | '/perfil'
     | '/publicar'
     | '/soporte'
@@ -251,6 +262,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/chats'
     | '/mis-publicaciones'
+    | '/notificaciones'
     | '/perfil'
     | '/publicar'
     | '/soporte'
@@ -275,6 +287,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/chats'
     | '/_authenticated/mis-publicaciones'
+    | '/_authenticated/notificaciones'
     | '/_authenticated/perfil'
     | '/_authenticated/publicar'
     | '/_authenticated/soporte'
@@ -402,6 +415,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPerfilRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/notificaciones': {
+      id: '/_authenticated/notificaciones'
+      path: '/notificaciones'
+      fullPath: '/notificaciones'
+      preLoaderRoute: typeof AuthenticatedNotificacionesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/mis-publicaciones': {
       id: '/_authenticated/mis-publicaciones'
       path: '/mis-publicaciones'
@@ -465,6 +485,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedChatsRoute: typeof AuthenticatedChatsRoute
   AuthenticatedMisPublicacionesRoute: typeof AuthenticatedMisPublicacionesRoute
+  AuthenticatedNotificacionesRoute: typeof AuthenticatedNotificacionesRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedPublicarRoute: typeof AuthenticatedPublicarRoute
   AuthenticatedSoporteRoute: typeof AuthenticatedSoporteRoute
@@ -478,6 +499,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedChatsRoute: AuthenticatedChatsRoute,
   AuthenticatedMisPublicacionesRoute: AuthenticatedMisPublicacionesRoute,
+  AuthenticatedNotificacionesRoute: AuthenticatedNotificacionesRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedPublicarRoute: AuthenticatedPublicarRoute,
   AuthenticatedSoporteRoute: AuthenticatedSoporteRoute,

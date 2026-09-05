@@ -162,7 +162,7 @@ export function Header() {
                           </DropdownMenuItem>
                         ))}
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => navigate({ to: "/mis-publicaciones" })}>
+                        <DropdownMenuItem onClick={() => navigate({ to: "/notificaciones" })}>
                           Ver historial completo
                         </DropdownMenuItem>
                       </>
