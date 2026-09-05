@@ -4,7 +4,17 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
-import { Plus, MessageCircle, User, LogOut, Globe, ShieldCheck, Bell, ShoppingBag } from "lucide-react";
+import {
+  Plus,
+  MessageCircle,
+  User,
+  LogOut,
+  Globe,
+  ShieldCheck,
+  Bell,
+  ShoppingBag,
+  Trash2,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +36,7 @@ export function Header() {
     notifications: purchaseNotifications,
     historyNotifications,
     decidePurchase,
+    deleteNotification,
   } = usePurchaseNotifications();
 
   return (
@@ -71,7 +82,12 @@ export function Header() {
               {(purchaseNotifications.length > 0 || historyNotifications.length > 0) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative" aria-label="Solicitudes de compra">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="relative"
+                      aria-label="Solicitudes de compra"
+                    >
                       <ShoppingBag className="h-5 w-5" />
                       {purchaseNotifications.length > 0 && (
                         <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
@@ -87,14 +103,24 @@ export function Header() {
                           Pendientes
                         </div>
                         {purchaseNotifications.map((notification) => (
-                          <DropdownMenuItem key={notification.id} className="flex-col items-stretch gap-2">
+                          <DropdownMenuItem
+                            key={notification.id}
+                            className="flex-col items-stretch gap-2"
+                          >
                             <span className="text-sm">{notification.mensaje}</span>
                             {notification.tipo === "compra_solicitada" && (
                               <span className="flex gap-2">
-                                <Button size="sm" onClick={() => void decidePurchase(notification, "CONFIRMADA")}>
+                                <Button
+                                  size="sm"
+                                  onClick={() => void decidePurchase(notification, "CONFIRMADA")}
+                                >
                                   Aceptar
                                 </Button>
-                                <Button size="sm" variant="destructive" onClick={() => void decidePurchase(notification, "CANCELADA")}>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => void decidePurchase(notification, "CANCELADA")}
+                                >
                                   Rechazar
                                 </Button>
                               </span>
@@ -111,8 +137,28 @@ export function Header() {
                           Historial
                         </div>
                         {historyNotifications.map((notification) => (
-                          <DropdownMenuItem key={notification.id} className="cursor-default focus:bg-transparent focus:text-current">
-                            <span className="text-sm text-muted-foreground">{notification.mensaje}</span>
+                          <DropdownMenuItem
+                            key={notification.id}
+                            className="cursor-default items-start gap-2 focus:bg-transparent focus:text-current"
+                          >
+                            <span className="min-w-0 flex-1 text-sm text-muted-foreground">
+                              {notification.mensaje}
+                            </span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 shrink-0"
+                              aria-label="Eliminar notificación"
+                              title="Eliminar notificación"
+                              onClick={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                void deleteNotification(notification.id);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </DropdownMenuItem>
                         ))}
                         <DropdownMenuSeparator />

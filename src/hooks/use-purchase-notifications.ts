@@ -33,7 +33,9 @@ export function usePurchaseNotifications() {
       .limit(50);
 
     const notificationsRows = (rows as PurchaseNotification[]) ?? [];
-    const compraIds = [...new Set(notificationsRows.map((item) => item.compra_id).filter(Boolean))] as string[];
+    const compraIds = [
+      ...new Set(notificationsRows.map((item) => item.compra_id).filter(Boolean)),
+    ] as string[];
 
     const purchaseStateById = new Map<string, string>();
     if (compraIds.length > 0) {
@@ -87,7 +89,12 @@ export function usePurchaseNotifications() {
       .channel(`purchase-notifications:${user.id}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "notificaciones", filter: `user_id=eq.${user.id}` },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notificaciones",
+          filter: `user_id=eq.${user.id}`,
+        },
         () => void refresh(),
       )
       .subscribe();
@@ -98,7 +105,10 @@ export function usePurchaseNotifications() {
     };
   }, [user?.id]);
 
-  const decidePurchase = async (notification: PurchaseNotification, estado: "CONFIRMADA" | "CANCELADA") => {
+  const decidePurchase = async (
+    notification: PurchaseNotification,
+    estado: "CONFIRMADA" | "CANCELADA",
+  ) => {
     if (!notification.compra_id) return;
     const { error } = await supabase
       .from("compras")
@@ -115,5 +125,21 @@ export function usePurchaseNotifications() {
     toast.success(estado === "CONFIRMADA" ? "Compra aceptada" : "Solicitud rechazada");
   };
 
-  return { notifications, historyNotifications, decidePurchase };
+  const deleteNotification = async (notificationId: string) => {
+    const { error } = await supabase
+      .from("notificaciones")
+      .delete()
+      .eq("id", notificationId)
+      .eq("user_id", user?.id ?? "");
+
+    if (error) {
+      toast.error("No se pudo eliminar la notificación");
+      return;
+    }
+
+    await refresh();
+    toast.success("Notificación eliminada");
+  };
+
+  return { notifications, historyNotifications, decidePurchase, deleteNotification };
 }
