@@ -57,6 +57,8 @@ function serveStatic(filePath, res) {
       js: "application/javascript",
       css: "text/css",
       json: "application/json",
+      ico: "image/x-icon",
+      svg: "image/svg+xml",
     };
     res.statusCode = 200;
     res.setHeader("content-type", mimeTypes[ext] || "application/octet-stream");
@@ -78,6 +80,13 @@ export default async function handler(req, res) {
       const assetUrl = decodeURIComponent(url.split("?")[0]);
       const assetPath = join(__dirname, "../dist/client", assetUrl);
       if (serveStatic(assetPath, res)) {
+        return;
+      }
+    }
+
+    if (url === "/favicon.svg" || url === "/favicon.ico") {
+      const faviconPath = join(__dirname, "../dist/client", url.slice(1));
+      if (serveStatic(faviconPath, res)) {
         return;
       }
     }
