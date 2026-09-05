@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -34,6 +34,7 @@ function AuthPage() {
   const { t } = useI18n();
   const { user } = useAuth();
   const nav = useNavigate();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
 
   const [emailTab, setEmailTab] = useState<"signin" | "signup">("signin");
 
@@ -287,6 +288,10 @@ function AuthPage() {
       }
     });
   };
+
+  if (pathname !== "/auth" && pathname !== "/auth/") {
+    return <Outlet />;
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(124,58,237,0.35),_transparent_35%),linear-gradient(180deg,_#7c3aed_0%,_#3b82f6_100%)] p-4 text-white">
